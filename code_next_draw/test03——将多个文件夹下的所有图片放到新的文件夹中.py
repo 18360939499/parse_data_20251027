@@ -1,8 +1,15 @@
 import os
 import shutil
 
-src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\data_1024_1747_1\10241747\pictures_no_normal"  # 源根目录
-dst_folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data_1024_1747_1\10241747\pictures_no_normal\all"  # 收集到的新文件夹
+NORMAL_PER_GROUP=1
+
+if NORMAL_PER_GROUP:
+    src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_normal"  # 源根目录
+    dst_folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_normal\all"  # 收集到的新文件夹
+
+else:
+    src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_no_normal"  # 源根目录
+    dst_folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_no_normal\all"  # 收集到的新文件夹
 
 def collect_images(src_root, dst_folder, exts=None):
     """
