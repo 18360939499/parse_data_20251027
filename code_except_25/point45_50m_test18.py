@@ -5,8 +5,8 @@ import chardet
 from openpyxl import load_workbook
 
 # 起始标志与长度
-start_flag = bytes.fromhex("12 00 00 00 90 01 00 00")
-input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_10_25_10241747_write_height7_65.bin"  # 你的输入文件路径
+start_flag = bytes.fromhex("12 00 00 00 00 01 00 00")
+input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_202511061130_write7_85.bin"  # 输入的大文件
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:
@@ -32,12 +32,12 @@ def parse_binary_file(file_path):
     with open(file_path, "rb") as f:
         content = f.read()
 
-        # 尝试把原始文件内容看成 ascii hex 文本再转字节
-        try:
-            hex_string = content.decode('ascii').replace(" ", "").strip()
-            content = bytes.fromhex(hex_string)
-        except:
-            pass  # 如果不是ascii表示的hex，就跳过，保持原始content
+        # # 尝试把原始文件内容看成 ascii hex 文本再转字节
+        # try:
+        #     hex_string = content.decode('ascii').replace(" ", "").strip()
+        #     content = bytes.fromhex(hex_string)
+        # except:
+        #     pass  # 如果不是ascii表示的hex，就跳过，保持原始content
 
     # 查找起始标志
     start_index = content.find(start_flag)

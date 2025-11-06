@@ -4,10 +4,12 @@ import pandas as pd
 import chardet
 from openpyxl import load_workbook
 
-input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_10_25_10241747_write_height7_65.bin" # 你的输入文件路径
-
 # 起始标志与长度
-start_flag = bytes.fromhex("10 00 00 00 20 03 00 00")
+start_flag = bytes.fromhex("0F 00 00 00 00 02 00 00")
+# start_flag = bytes.fromhex("0F 00 00 00 B0 01 00 00")
+input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_202511061130_write7_85.bin"  # 输入的大文件
+
+# input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_10_25_10241747_write_height7_65.bin"  # 你的输入文件路径
 
 
 def detect_encoding(file_path):
@@ -24,7 +26,7 @@ def parse_binary_file(file_path):
     base_name = os.path.splitext(os.path.basename(file_path))[0]  # 不带路径和扩展名
     output_excel_path = os.path.join(
         os.path.dirname(file_path),  # 存到同目录
-        f"parsed_16_{base_name}.xlsx"
+        f"parsed_15_{base_name}.xlsx"
     )
 
 

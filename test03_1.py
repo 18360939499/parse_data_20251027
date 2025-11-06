@@ -4,13 +4,16 @@ import pandas as pd
 from datetime import datetime
 
 # === 常量定义 ===
-TX_NUM = 10
-folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747"
+TX_NUM = 7
+# folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\10241747"
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
+
 NUM_DOPPLER_BINS = 128  # 多普勒 bin 数量
 RIVER_RADAR_HOR_THETA = np.deg2rad(0)  # 雷达水平角度 (弧度)
 MAX_VALUE_THRESLOD = 3
-MAX_VALUE_THRESLOD_PARAM = 0.9
+MAX_VALUE_THRESLOD_PARAM = 0.2
 MAX_LEFT_RIGHT_INTERVAL = 1
+
 ALL_AVER = 1
 
 if ALL_AVER != 1:
@@ -22,10 +25,10 @@ systemIfo_len = 0x24
 height_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
 area_len = 0x28
 
-start_flag = bytes.fromhex("19 00 00 00 00 C8 00 00")
-payload_len = 0xC800  # 51200 bytes
-range_flag = bytes.fromhex("11 00 00 00 20 03 00 00")
-range_angle_len = 0x320
+start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
+payload_len = 0x8000  # 51200 bytes
+range_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
+range_angle_len = 0x200
 
 # ======================================================
 # 多峰值检测函数
@@ -142,9 +145,9 @@ def process_folder(folder):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # === Step1-6 Excel ===
-    with pd.ExcelWriter(os.path.join(folder, f"{timestamp}_excel_1.xlsx"), engine="openpyxl") as writer1, \
-         pd.ExcelWriter(os.path.join(folder, f"{timestamp}_excel_2.xlsx"), engine="openpyxl") as writer2, \
-         pd.ExcelWriter(os.path.join(folder, f"{timestamp}_excel_5_17.xlsx"), engine="openpyxl") as writer5:
+    with pd.ExcelWriter(os.path.join(folder, f"{timestamp}_{MAX_VALUE_THRESLOD_PARAM}_{MAX_LEFT_RIGHT_INTERVAL}_excel_1.xlsx"), engine="openpyxl") as writer1, \
+         pd.ExcelWriter(os.path.join(folder, f"{timestamp}_{MAX_VALUE_THRESLOD_PARAM}_{MAX_LEFT_RIGHT_INTERVAL}_excel_2.xlsx"), engine="openpyxl") as writer2, \
+         pd.ExcelWriter(os.path.join(folder, f"{timestamp}_{MAX_VALUE_THRESLOD_PARAM}_{MAX_LEFT_RIGHT_INTERVAL}_excel_5_17.xlsx"), engine="openpyxl") as writer5:
 
         all_weighted_idx, all_velocities, all_river_velocities = [], [], []
         all_ranges, all_areas, valid_files = [], [], []
@@ -174,15 +177,15 @@ def process_folder(folder):
         max_len = max(len(v) for v in data_list)
         padded = [v + [None]*(max_len - len(v)) for v in data_list]
         df = pd.DataFrame(padded, index=valid_files)
-        path = os.path.join(folder, f"{timestamp}_{name}.xlsx")
+        path = os.path.join(folder, f"{timestamp}_{MAX_VALUE_THRESLOD_PARAM}_{MAX_LEFT_RIGHT_INTERVAL}{name}.xlsx")
         df.to_excel(path)
         print(f"{name} 已生成: {path}")
         return df
 
-    df3 = to_excel7_style(all_weighted_idx, folder, timestamp, "excel_3_weighted_idx")
-    df4 = to_excel7_style(all_velocities, folder, timestamp, "excel_4_radarVelocity")
-    df6 = to_excel7_style(all_river_velocities, folder, timestamp, "excel_6_riverVelocity")
-    df7 = to_excel7_style(all_river_velocities, folder, timestamp, "excel_7_all")
+    df3 = to_excel7_style(all_weighted_idx, folder, timestamp, "_excel_3_weighted_idx")
+    df4 = to_excel7_style(all_velocities, folder, timestamp, "_excel_4_radarVelocity")
+    df6 = to_excel7_style(all_river_velocities, folder, timestamp, "_excel_6_riverVelocity")
+    df7 = to_excel7_style(all_river_velocities, folder, timestamp, "_excel_7_all")
 
     # === Step8: 负值置零 + 平均流速 + 流量 ===
     df8 = df7.copy()
@@ -201,7 +204,7 @@ def process_folder(folder):
     df8["riverVelocity_avg"] = avg_velocities
     df8["riverArea"] = areas
     df8["riverFlow"] = flows
-    path8 = os.path.join(folder, f"{timestamp}_excel_8.xlsx")
+    path8 = os.path.join(folder, f"{timestamp}_{MAX_VALUE_THRESLOD_PARAM}_{MAX_LEFT_RIGHT_INTERVAL}_excel_8.xlsx")
     df8.to_excel(path8)
     print(f"excel_8 已生成: {path8}")
 
@@ -209,4 +212,4 @@ def process_folder(folder):
 # 主入口
 # ======================================================
 if __name__ == "__main__":
-    process_folder(folder)
+    process_folder(input_folder)

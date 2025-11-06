@@ -3,9 +3,11 @@ import struct
 import pandas as pd
 import chardet
 
-start_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
-
 input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
+# 起始标志
+start_flag = bytes.fromhex("1A 00 00 00 00 01 00 00")
+
+produce_file_name = "server_parsed_26_all.xlsx"  # 保存的文件名
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:
@@ -46,16 +48,7 @@ def parse_binary_file(file_path, start_flag):
             break
 
         data_bytes = content[data_start:data_end]
-        if 0:
-            floats = [struct.unpack('<f', data_bytes[i:i + 4])[0] for i in range(0, len(data_bytes), 4)]
-        else:
-            # === 1. 前两个 uint32 ===
-            uint_part = [struct.unpack('<I', data_bytes[i:i + 4])[0] for i in range(0, 8, 4)]
-            # === 2. 剩下部分是 float32 ===
-            float_part = [struct.unpack('<f', data_bytes[i:i + 4])[0] for i in range(8, len(data_bytes), 4)]
-            # === 3. 合并两个uint + float部分 ===
-            floats = uint_part + float_part
-
+        floats = [struct.unpack('<f', data_bytes[i:i + 4])[0] for i in range(0, len(data_bytes), 4)]
         floats_all.append(floats)
 
         # 继续搜索下一个
@@ -65,25 +58,26 @@ def parse_binary_file(file_path, start_flag):
 
 
 def parse_folder(input_folder):
-    # 起始标志
+
 
     all_data = []
     for file_name in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_name)
-        if not os.path.isfile(file_path):
-            continue
+        if file_name.lower().endswith(".bin"):
+            file_path = os.path.join(input_folder, file_name)
+            if not os.path.isfile(file_path):
+                continue
 
-        floats_all = parse_binary_file(file_path, start_flag)
+            floats_all = parse_binary_file(file_path, start_flag)
 
-        for floats in floats_all:
-            # 每行前面加文件名
-            all_data.append([file_name] + floats)
+            for floats in floats_all:
+                # 每行前面加文件名
+                all_data.append([file_name] + floats)
 
     if all_data:
         df = pd.DataFrame(all_data)
-        df.to_excel(os.path.join(input_folder, "server_parsed_21_all.xlsx"),
+        df.to_excel(os.path.join(input_folder, produce_file_name),
                     index=False, header=False)
-        print(f"已解析 {len(all_data)} 行，保存到：{os.path.join(input_folder, 'server_parsed_21_all.xlsx')}")
+        print(f"已解析 {len(all_data)} 行，保存到：{os.path.join(input_folder, produce_file_name)}")
     else:
         print("未解析到任何数据帧")
 

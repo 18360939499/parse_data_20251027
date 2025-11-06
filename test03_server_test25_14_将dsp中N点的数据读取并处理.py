@@ -6,7 +6,7 @@ from datetime import datetime
 # === 常量定义 ===
 # folder = r"F:\2_python\20251024解析数据\10241358"
 
-folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\10241712"
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
 
 NUM_DOPPLER_BINS = 128  # 多普勒 bin 数量
 RIVER_RADAR_HOR_THETA = np.deg2rad(0)  # 雷达水平角度 (弧度)
@@ -32,11 +32,11 @@ if 0:
     range_flag = bytes.fromhex("11 00 00 00 18 01 00 00")
     range_angle_len = 0x118
 else:
-    start_flag = bytes.fromhex("19 00 00 00 00 C8 00 00")
-    payload_len = 0xC800  # 51200 bytes
+    start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
+    payload_len = 0x8000
 
-    range_flag = bytes.fromhex("11 00 00 00 20 03 00 00")
-    range_angle_len = 0x320
+    range_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
+    range_angle_len = 0x200
 
 
 TX_NUM = 1
@@ -328,4 +328,4 @@ def process_folder(folder):
 # 主入口
 # ======================================================
 if __name__ == "__main__":
-    process_folder(folder)
+    process_folder(input_folder)
