@@ -6,7 +6,9 @@ from openpyxl import load_workbook
 
 # 起始标志与长度
 start_flag = bytes.fromhex("12 00 00 00 00 01 00 00")
-input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_202511061130_write7_85.bin"  # 输入的大文件
+
+# start_flag = bytes.fromhex("12 00 00 00 00 01 00 00")
+input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\radar_raw_data_11201539_write10_45_max2_3.bin"  # 输入的大文件
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:

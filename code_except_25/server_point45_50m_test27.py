@@ -4,7 +4,7 @@ import pandas as pd
 import chardet
 
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3'  # 文件夹路径
 # 起始标志
 start_flag = bytes.fromhex("1B 00 00 00 00 01 00 00")
 
@@ -63,15 +63,16 @@ def parse_folder(input_folder):
 
     all_data = []
     for file_name in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_name)
-        if not os.path.isfile(file_path):
-            continue
+        if file_name.lower().endswith(".bin"):
+            file_path = os.path.join(input_folder, file_name)
+            if not os.path.isfile(file_path):
+                continue
 
-        floats_all = parse_binary_file(file_path, start_flag)
+            floats_all = parse_binary_file(file_path, start_flag)
 
-        for floats in floats_all:
-            # 每行前面加文件名
-            all_data.append([file_name] + floats)
+            for floats in floats_all:
+                # 每行前面加文件名
+                all_data.append([file_name] + floats)
 
     if all_data:
         df = pd.DataFrame(all_data)

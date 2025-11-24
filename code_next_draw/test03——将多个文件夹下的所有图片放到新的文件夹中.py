@@ -4,8 +4,8 @@ import shutil
 NORMAL_PER_GROUP=1
 
 if NORMAL_PER_GROUP:
-    src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_normal"  # 源根目录
-    dst_folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_normal\all"  # 收集到的新文件夹
+    src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3\pictures_normal"  # 源根目录
+    dst_folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3\pictures_normal\all"  # 收集到的新文件夹
 
 else:
     src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_no_normal"  # 源根目录

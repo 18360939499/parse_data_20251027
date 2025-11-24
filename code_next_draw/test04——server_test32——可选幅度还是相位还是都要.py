@@ -19,7 +19,7 @@ NUM_ANT = 112          # 虚拟天线数
 NUM_DOPPLER = 128      # Doppler维度数量（每个天线有128个点）
 
 input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
-output_folder = os.path.join(input_folder, "plots_with_peaks_test")
+output_folder = os.path.join(input_folder, "plots_with_peaks_test1")
 os.makedirs(output_folder, exist_ok=True)
 
 # 每张图画20个天线的子图（4行5列）

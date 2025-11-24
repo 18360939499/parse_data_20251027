@@ -4,7 +4,7 @@ import pandas as pd
 import chardet
 
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3'  # 文件夹路径
 # 起始标志
 start_flag = bytes.fromhex("1C 00 00 00 00 01 00 00")
 

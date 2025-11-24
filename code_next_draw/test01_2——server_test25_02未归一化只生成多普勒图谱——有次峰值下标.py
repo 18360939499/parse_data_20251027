@@ -17,7 +17,7 @@ NORMAL_PER_GROUP = 1  # 是否对每个组的多普勒信号进行归一化，1�
 SECOND_PEAK_RATIO = 0.2  # 次峰阈值比例（主峰值的20%）
 
 if NORMAL_PER_GROUP:
-    put_folder = "pictures_normal"
+    put_folder = "pictures_normal_youcifeng"
 else:
     put_folder = "pictures_no_normal"
 
@@ -70,8 +70,8 @@ def parse_and_plot_bin(bin_path, global_out_dir):
             ax = axes[k]
             y = shifted[g_idx]
 
-            if NORMAL_PER_GROUP:
-                y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)
+            # if NORMAL_PER_GROUP:
+            #     y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)
 
             ax.plot(y, label="Signal")
 

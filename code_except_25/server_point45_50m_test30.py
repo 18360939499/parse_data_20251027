@@ -4,7 +4,7 @@ import pandas as pd
 
 start_flag = bytes.fromhex("1E 00 00 00")
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11191528'  # 文件夹路径
 produce_file_name = "server_parsed_30_all.xlsx"  # 保存的文件名
 
 

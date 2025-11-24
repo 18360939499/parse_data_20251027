@@ -13,7 +13,10 @@ NUM_GROUPS_OF_ONE_FIG = 20
 NUM_COLS = 5 #一行5张图片
 NUM_ROWS = NUM_GROUPS_OF_ONE_FIG // NUM_COLS
 
-folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\11031728_data"
+# input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3'
+
+
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600'
 
 NORMAL_PER_GROUP=1#是否对每个组的多普勒信号进行归一化，1为是，0为否。
 
@@ -82,9 +85,11 @@ def parse_and_plot_bin(bin_path, global_out_dir):
         for k, g_idx in enumerate(range(start_g, end_g)):#遍历当前图要画的开始和结束组索引
             ax = axes[k]#选中第 k 个子图
             y = shifted[g_idx]#取该组的多普勒信号；
-            if NORMAL_PER_GROUP:
-                #归一化：将信号值映射到 0~1 之间，使得不同组的信号能有比较大的差异。
-                y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)
+            # y = 20 * np.log10(np.abs(y) + 1e-8)
+
+            # if NORMAL_PER_GROUP:
+            #     #归一化：将信号值映射到 0~1 之间，使得不同组的信号能有比较大的差异。
+            #     y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)
 
             ax.plot(y, label="Signal")  # 绘制曲线
 
@@ -130,4 +135,4 @@ def parse_folder(folder_path):
 
 
 if __name__ == "__main__":
-    parse_folder(folder)
+    parse_folder(input_folder)

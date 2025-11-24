@@ -5,7 +5,7 @@ import chardet
 
 start_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11181631'  # 文件夹路径
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:
