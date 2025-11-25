@@ -6,7 +6,7 @@ from datetime import datetime
 # === 常量定义 ===
 TX_NUM = 7
 # folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\10241747"
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600'  # 文件夹路径
+input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test'  # 文件夹路径
 
 NUM_DOPPLER_BINS = 128  # 多普勒 bin 数量
 MAX_VALUE_THRESLOD = 3
@@ -14,6 +14,7 @@ MAX_VALUE_THRESLOD_PARAM = 0.2
 MAX_LEFT_RIGHT_INTERVAL = 1
 
 SIDE_SCAN=0
+CALC_NEW = 1
 
 if SIDE_SCAN == 1:
     RIVER_RADAR_HOR_THETA = np.deg2rad(45)  # 雷达水平角度 (弧度)
@@ -37,6 +38,21 @@ payload_len = 0x8000  # 51200 bytes
 range_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
 range_angle_len = 0x200
 
+range_angle_idx_flag = bytes.fromhex("12 00 00 00 00 01 00 00")
+range_angle_idx_len = 0x100
+
+radar_theta_excel = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test\parsed_14_frame_0001.xlsx"
+
+# ===== Step1: 从 Excel 读取第一行 radarTheta =====
+df_theta = pd.read_excel(radar_theta_excel, header=None)
+radarTheta = df_theta.iloc[0].tolist()  # 第一行转换为 list
+
+# ===== Step3: 根据 angleIdx 查找对应 radarTheta 值 =====
+def get_real_angle(angle_idx):
+    if 0 <= angle_idx < len(radarTheta):
+        return radarTheta[angle_idx]
+    else:
+        return np.nan  # 避免索引越界
 # ======================================================
 # 多峰值检测函数
 # ======================================================
@@ -55,6 +71,8 @@ def multi_peak_search(x, threshold_ratio=MAX_VALUE_THRESLOD_PARAM):
     sorted_peaks = sorted(zip(local_idx, local_vals), key=lambda kv: kv[1], reverse=True)
     peaks = [(i, v) for i, v in sorted_peaks if v >= threshold_ratio * max_val and v > MAX_VALUE_THRESLOD]
     return peaks
+
+
 
 # ======================================================
 # 处理单个文件
@@ -80,8 +98,10 @@ def process_file(fpath):
     d_idx = data.find(doppler_flag)
     if d_idx >= 0:
         arr_d = np.frombuffer(data[d_idx + len(doppler_flag): d_idx + len(doppler_flag) + systemIfo_len], dtype="<f4")
+        radar_rangeRes_file= arr_d[0]
         radar_dopplerRes_file = arr_d[1] / TX_NUM if len(arr_d) >= 4 else 0.368753016
     else:
+        radar_rangeRes_file =0.1
         radar_dopplerRes_file = 0.368753016
 
     rows2, weighted_idx, velocities = [], [], []
@@ -113,6 +133,32 @@ def process_file(fpath):
             r, ang = arr_rt[j], arr_rt[j + 1]
             records.append([r, ang, np.deg2rad(ang)])
     df5 = pd.DataFrame(records, columns=["range", "angle", "angle_rad"])
+
+    range_angle_idx = data.find(range_angle_idx_flag)
+    records_idx = []
+    if range_angle_idx >= 0:
+        arr_rt = np.frombuffer(data[range_angle_idx + len(range_angle_idx_flag): range_angle_idx + len(range_angle_idx_flag) + range_angle_idx_len], dtype="<h")
+        for j in range(0, len(arr_rt), 2):
+            if j + 1 >= len(arr_rt):
+                break
+            rangeIdx, angleIdx = arr_rt[j], arr_rt[j + 1]
+            records_idx.append([rangeIdx, angleIdx])
+    df_range_angle_idx = pd.DataFrame(records_idx, columns=["rangeIdx", "angleIdx"])
+
+    # 合并 DataFrame
+    df5 = pd.concat([df5, df_range_angle_idx], axis=1)
+
+
+    df5["range_new"] = df5["rangeIdx"] * radar_rangeRes_file
+
+    # ===== Step3: 生成 real_angle_value 列 =====
+    df5["real_angle_value"] = df5["angleIdx"].apply(get_real_angle)
+    df5["angle_new_rad"] = np.deg2rad(df5["real_angle_value"])
+    print(radarTheta)
+
+    print(df5["angleIdx"].head())
+    print(df5["angleIdx"].dtype)
+
     h_idx = data.find(height_flag)
     radar_height = river_area = None
     if h_idx >= 0:
@@ -125,11 +171,17 @@ def process_file(fpath):
             df5["RiverHeight"] = river_height
             df5["riverArea"] = river_area
     df5["radar_dopplerRes"] = radar_dopplerRes_file
+    df5["radar_rangeRes"] = radar_rangeRes_file
 
     real_vel = []
     if radar_height is not None and len(df5) > 0:
         for i in range(len(df5)):
-            r, ang_rad = df5.loc[i, "range"], df5.loc[i, "angle_rad"]
+            #new
+            if CALC_NEW:
+                r, ang_rad = df5.loc[i, "range_new"], df5.loc[i, "angle_new_rad"]
+            else:
+                r, ang_rad = df5.loc[i, "range"], df5.loc[i, "angle_rad"]
+
             radar_vel = velocities[i] if i < len(velocities) else 0.0
             if r > radar_height:
                 if SIDE_SCAN == 1:
@@ -181,7 +233,12 @@ def process_folder(folder):
             all_weighted_idx.append(weighted_idx)
             all_velocities.append(velocities)
             all_river_velocities.append(real_vel)
-            all_ranges.append(df5["range"].tolist() if "range" in df5 else [])
+            #new
+            if CALC_NEW:
+                all_ranges.append(df5["range_new"].tolist() if "range_new" in df5 else [])
+            else:
+                all_ranges.append(df5["range"].tolist() if "range" in df5 else [])
+
             all_areas.append(df5["riverArea"].iloc[0] if "riverArea" in df5 else None)
             valid_files.append(f)
 
