@@ -4,13 +4,25 @@ import pandas as pd
 import chardet
 from openpyxl import load_workbook
 
-# 起始标志与长度
-start_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
-# start_flag = bytes.fromhex("11 00 00 00 58 03 00 00")
-# start_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
-# input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_10_25_10241747_write_height7_65.bin"  # 你的输入文件路径
-input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test\frame_0001.bin"  # 输入的大文件
+# 起始标志与长度
+# start_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
+# start_flag = bytes.fromhex("11 00 00 00 58 03 00 00")
+start_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
+
+def choose_file():
+    Tk().withdraw()  # 不显示主窗口
+    filename = askopenfilename(
+        title="请选择输入的 .bin 文件",
+        filetypes=[("BIN files", "*.bin"), ("All files", "*.*")]
+    )
+    if not filename:
+        raise ValueError("未选择任何文件")
+    print(f"已选择文件：{filename}")
+    return filename
+
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:
@@ -71,4 +83,6 @@ def parse_binary_file(file_path):
     return df
 
 # 使用示例
+input_path = choose_file()
+
 parse_binary_file(input_path)

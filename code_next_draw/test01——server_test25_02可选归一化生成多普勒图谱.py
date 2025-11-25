@@ -3,20 +3,21 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
 
-start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
 
-payload_len = 0x8000
+# start_flag = bytes.fromhex("19 00 00 00 00 C8 00 00")
+# payload_len = 0xC800
+
+start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+payload_len = 0x6000
 
 NUM_CHIRPS = 128
 NUM_GROUPS_OF_ONE_FIG = 20
 NUM_COLS = 5 #一行5张图片
 NUM_ROWS = NUM_GROUPS_OF_ONE_FIG // NUM_COLS
 
-# input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3'
-
-
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600'
 
 NORMAL_PER_GROUP=1#是否对每个组的多普勒信号进行归一化，1为是，0为否。
 
@@ -24,6 +25,18 @@ if NORMAL_PER_GROUP:
     put_folder = "pictures_normal"
 else:
     put_folder = "pictures_no_normal"
+
+
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 
 def parse_and_plot_bin(bin_path, global_out_dir):
@@ -85,27 +98,11 @@ def parse_and_plot_bin(bin_path, global_out_dir):
         for k, g_idx in enumerate(range(start_g, end_g)):#遍历当前图要画的开始和结束组索引
             ax = axes[k]#选中第 k 个子图
             y = shifted[g_idx]#取该组的多普勒信号；
-            # y = 20 * np.log10(np.abs(y) + 1e-8)
-
-            # if NORMAL_PER_GROUP:
-            #     #归一化：将信号值映射到 0~1 之间，使得不同组的信号能有比较大的差异。
-            #     y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)
-
-            ax.plot(y, label="Signal")  # 绘制曲线
-
-            # === 找出主峰（最高点）===
-            main_peak_idx = np.argmax(y)
-            main_peak_val = y[main_peak_idx]
-
-            # 标出主峰点
-            ax.plot(main_peak_idx, main_peak_val, "ro", markersize=6, label="Main Peak")
-
-            # 在图上标注主峰坐标（Index, Value）
-            ax.text(main_peak_idx, main_peak_val,
-                    f"({main_peak_idx},{main_peak_val:.2f})",
-                    color="red", fontsize=8, ha="left", va="bottom")
-
-            ax.set_title(f"Group {g_idx:03d}", fontsize=9)
+            if NORMAL_PER_GROUP:
+                #归一化：将信号值映射到 0~1 之间，使得不同组的信号能有比较大的差异。
+                y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)
+            ax.plot(y)#绘制曲线；
+            ax.set_title(f"Group {g_idx:03d}", fontsize=9)#给子图加标题，例如 “Group 012”；
             ax.set_xlabel("Index")
             ax.set_ylabel("Value")
 
@@ -129,10 +126,13 @@ def parse_folder(folder_path):
     os.makedirs(global_out_dir, exist_ok=True)
 
     for fname in os.listdir(folder_path):
-        fpath = os.path.join(folder_path, fname)
-        if os.path.isfile(fpath):
-            parse_and_plot_bin(fpath, global_out_dir)
+        if fname.lower().endswith(".bin"):
+            fpath = os.path.join(folder_path, fname)
+            if os.path.isfile(fpath):
+                parse_and_plot_bin(fpath, global_out_dir)
 
 
 if __name__ == "__main__":
+    input_folder = choose_folder()
+
     parse_folder(input_folder)

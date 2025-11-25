@@ -3,10 +3,23 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
+
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
+
 # === 常量定义 ===
 TX_NUM = 7
-# folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\10241747"
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test'  # 文件夹路径
+
 
 NUM_DOPPLER_BINS = 128  # 多普勒 bin 数量
 MAX_VALUE_THRESLOD = 3
@@ -41,11 +54,15 @@ range_angle_len = 0x180
 range_angle_idx_flag = bytes.fromhex("12 00 00 00 C0 00 00 00")
 range_angle_idx_len = 0xC0
 
-radar_theta_excel = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test\parsed_14_frame_0001.xlsx"
 
-# ===== Step1: 从 Excel 读取第一行 radarTheta =====
-df_theta = pd.read_excel(radar_theta_excel, header=None)
-radarTheta = df_theta.iloc[0].tolist()  # 第一行转换为 list
+def find_parsed_excel(input_folder, target_name="parsed_14_frame_0001.xlsx"):
+    """在 input_folder 内自动找到指定 Excel 文件"""
+    for root, dirs, files in os.walk(input_folder):
+        for f in files:
+            if f == target_name:
+                return os.path.join(root, f)
+    return None
+
 
 # ===== Step3: 根据 angleIdx 查找对应 radarTheta 值 =====
 def get_real_angle(angle_idx):
@@ -154,10 +171,10 @@ def process_file(fpath):
     # ===== Step3: 生成 real_angle_value 列 =====
     df5["real_angle_value"] = df5["angleIdx"].apply(get_real_angle)
     df5["angle_new_rad"] = np.deg2rad(df5["real_angle_value"])
-    print(radarTheta)
-
-    print(df5["angleIdx"].head())
-    print(df5["angleIdx"].dtype)
+    # print(radarTheta)
+    #
+    # print(df5["angleIdx"].head())
+    # print(df5["angleIdx"].dtype)
 
     h_idx = data.find(height_flag)
     radar_height = river_area = None
@@ -282,4 +299,16 @@ def process_folder(folder):
 # 主入口
 # ======================================================
 if __name__ == "__main__":
+    input_folder = choose_folder()
+    radar_theta_excel = find_parsed_excel(input_folder)
+    if radar_theta_excel is None:
+        print("❌ 未找到 parsed_14_frame_0001.xlsx")
+        exit()
+    else:
+        print(f"✔ 找到文件：{radar_theta_excel}")
+
+    # ===== Step1: 从 Excel 读取第一行 radarTheta =====
+    df_theta = pd.read_excel(radar_theta_excel, header=None)
+    radarTheta = df_theta.iloc[0].tolist()  # 第一行转换为 list
+
     process_folder(input_folder)

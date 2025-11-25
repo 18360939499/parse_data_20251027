@@ -1,5 +1,17 @@
 import os
 
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
+
+def choose_bin_file():
+    """弹窗选择 .bin 文件"""
+    Tk().withdraw()
+    file_path = askopenfilename(
+        title="请选择雷达原始 bin 文件",
+        filetypes=[("BIN 文件", "*.bin"), ("所有文件", "*.*")]
+    )
+    return file_path
+
 def split_bin_file(input_path, output_dir, frame_header_hex="0201040306050807"):
     # 转成字节串
     frame_header = bytes.fromhex(frame_header_hex)
@@ -37,6 +49,18 @@ def split_bin_file(input_path, output_dir, frame_header_hex="0201040306050807"):
 
 
 if __name__ == "__main__":
-    input_file = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\radar_raw_data_11251447.bin"   # 输入的大文件
-    output_dir = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test"   # 输出的目录
+    # 1️⃣ 选择输入文件
+    input_file = choose_bin_file()
+    if not input_file:
+        print("❌ 未选择文件，程序退出")
+        exit()
+
+    # 2️⃣ 自动生成输出目录：同目录 + 文件名（无后缀）
+    base_dir = os.path.dirname(input_file)
+    base_name = os.path.splitext(os.path.basename(input_file))[0]
+    output_dir = os.path.join(base_dir, base_name)
+
+    print(f"✔ 输入文件：{input_file}")
+    print(f"✔ 输出文件夹：{output_dir}")
+
     split_bin_file(input_file, output_dir)

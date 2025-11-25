@@ -3,9 +3,24 @@ import struct
 import pandas as pd
 import chardet
 
-start_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11181631'  # 文件夹路径
+
+
+start_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
+produce_file_name = "server_parsed_21_all.xlsx"  # 保存的文件名
+
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:
@@ -81,7 +96,7 @@ def parse_folder(input_folder):
 
     if all_data:
         df = pd.DataFrame(all_data)
-        df.to_excel(os.path.join(input_folder, "server_parsed_21_all.xlsx"),
+        df.to_excel(os.path.join(input_folder, produce_file_name),
                     index=False, header=False)
         print(f"已解析 {len(all_data)} 行，保存到：{os.path.join(input_folder, 'server_parsed_21_all.xlsx')}")
     else:
@@ -89,4 +104,6 @@ def parse_folder(input_folder):
 
 
 # 使用示例
+input_folder = choose_folder()
+
 parse_folder(input_folder)

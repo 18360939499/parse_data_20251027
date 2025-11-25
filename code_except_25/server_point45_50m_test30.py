@@ -2,11 +2,25 @@ import os
 import struct
 import pandas as pd
 
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
+
+
+
 start_flag = bytes.fromhex("1E 00 00 00")
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11191528'  # 文件夹路径
 produce_file_name = "server_parsed_30_all.xlsx"  # 保存的文件名
 
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 def parse_binary_file(file_path):
     """
@@ -67,5 +81,7 @@ def parse_folder(folder_path, output_excel_path):
 
 
 # 使用示例
+input_folder = choose_folder()
+
 output_excel = os.path.join(input_folder, produce_file_name)
 parse_folder(input_folder, output_excel)

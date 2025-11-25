@@ -3,12 +3,25 @@ import struct
 import pandas as pd
 import chardet
 
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3'  # 文件夹路径
 # 起始标志
-start_flag = bytes.fromhex("1C 00 00 00 00 01 00 00")
+# start_flag = bytes.fromhex("1C 00 00 00 00 01 00 00")
+start_flag = bytes.fromhex("1C 00 00 00 C0 00 00 00")
 
 produce_file_name = "server_parsed_28_all.xlsx"  # 保存的文件名
+
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:
@@ -84,4 +97,6 @@ def parse_folder(input_folder):
 
 
 # 使用示例
+input_folder = choose_folder()
+
 parse_folder(input_folder)

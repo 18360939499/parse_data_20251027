@@ -3,10 +3,19 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-# === 常量定义 ===
-# folder = r"F:\2_python\20251024解析数据\10241358"
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 NUM_DOPPLER_BINS = 128  # 多普勒 bin 数量
 RIVER_RADAR_HOR_THETA = np.deg2rad(0)  # 雷达水平角度 (弧度)
@@ -25,19 +34,11 @@ systemIfo_len = 0x24
 
 height_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
 area_len = 0x28
-if 0:
-    start_flag = bytes.fromhex("19 00 00 00 00 46 00 00")
-    payload_len = 0x4600  # 51200 bytes
 
-    range_flag = bytes.fromhex("11 00 00 00 18 01 00 00")
-    range_angle_len = 0x118
-else:
-    start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
-    payload_len = 0x8000
-
-    range_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
-    range_angle_len = 0x200
-
+start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+payload_len = 0x6000  # 51200 bytes
+range_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
+range_angle_len = 0x180
 
 TX_NUM = 1
 
@@ -328,4 +329,6 @@ def process_folder(folder):
 # 主入口
 # ======================================================
 if __name__ == "__main__":
+    input_folder = choose_folder()
+
     process_folder(input_folder)

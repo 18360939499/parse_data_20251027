@@ -3,15 +3,20 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
+
 # === 全局参数 ===
-start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
-payload_len = 0x8000
+# start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
+# payload_len = 0x8000
+start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+payload_len = 0x6000
+
 NUM_CHIRPS = 128
 NUM_GROUPS_OF_ONE_FIG = 20
 NUM_COLS = 5  # 一行5张图片
 NUM_ROWS = NUM_GROUPS_OF_ONE_FIG // NUM_COLS
-
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
 
 NORMAL_PER_GROUP = 1  # 是否对每个组的多普勒信号进行归一化，1为是，0为否
 SECOND_PEAK_RATIO = 0.2  # 次峰阈值比例（主峰值的20%）
@@ -20,6 +25,19 @@ if NORMAL_PER_GROUP:
     put_folder = "pictures_normal_youcifeng"
 else:
     put_folder = "pictures_no_normal"
+
+
+
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 
 def parse_and_plot_bin(bin_path, global_out_dir):
@@ -117,10 +135,13 @@ def parse_folder(folder_path):
     os.makedirs(global_out_dir, exist_ok=True)
 
     for fname in os.listdir(folder_path):
-        fpath = os.path.join(folder_path, fname)
-        if os.path.isfile(fpath):
-            parse_and_plot_bin(fpath, global_out_dir)
+        if fname.lower().endswith(".bin"):
+            fpath = os.path.join(folder_path, fname)
+            if os.path.isfile(fpath):
+                parse_and_plot_bin(fpath, global_out_dir)
 
 
 if __name__ == "__main__":
+    input_folder = choose_folder()
+
     parse_folder(input_folder)

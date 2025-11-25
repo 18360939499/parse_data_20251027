@@ -2,8 +2,14 @@ import os
 import numpy as np
 import pandas as pd
 
-start_flag = bytes.fromhex("19 00 00 00 00 C8 00 00")
-payload_len = 0xC800
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
+
+# start_flag = bytes.fromhex("19 00 00 00 00 C8 00 00")
+# payload_len = 0xC800
+start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+payload_len = 0x6000
+
 
 NUM_CHIRPS = 128
 
@@ -14,7 +20,17 @@ if DO_FFT_SHIFT:
 else:
     put_folder = "excel_output_no_fft"
 
-folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747"
+
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 
 def parse_bin_to_excel(bin_path, global_out_dir):
@@ -88,13 +104,16 @@ def parse_folder(folder_path):
     os.makedirs(global_out_dir, exist_ok=True)
 
     for fname in os.listdir(folder_path):
-        fpath = os.path.join(folder_path, fname)
-        if os.path.isfile(fpath):
-            try:
-                parse_bin_to_excel(fpath, global_out_dir)
-            except Exception as e:
-                print(f"{fpath}: 处理失败，原因：{e}")
+        if fname.lower().endswith(".bin"):
+            fpath = os.path.join(folder_path, fname)
+            if os.path.isfile(fpath):
+                try:
+                    parse_bin_to_excel(fpath, global_out_dir)
+                except Exception as e:
+                    print(f"{fpath}: 处理失败，原因：{e}")
 
 
 if __name__ == "__main__":
-    parse_folder(folder)
+    input_folder = choose_folder()
+
+    parse_folder(input_folder)

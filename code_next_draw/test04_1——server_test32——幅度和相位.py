@@ -2,6 +2,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
+
 # ================================================================
 # 🧩 一、参数配置区
 # ================================================================
@@ -12,15 +15,28 @@ NUM_RANGE = 64          # Range维度数量（range0 ~ range3）
 NUM_ANT = 112          # 虚拟天线数
 NUM_DOPPLER = 128      # Doppler维度数量（每个天线有128个点）
 
-input_folder = r'F:\2_python\test1024Gout\pythonProject1\.venv\11061130_write7_85'  # 文件夹路径
-output_folder = os.path.join(input_folder, "plots")
-os.makedirs(output_folder, exist_ok=True)
+
 
 # 每张图画20个天线的子图（4行5列）
 groups_per_fig = 20
 n_rows, n_cols = 4, 5
 
 
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
+
+input_folder = choose_folder()
+
+output_folder = os.path.join(input_folder, "plots")
+os.makedirs(output_folder, exist_ok=True)
 # ================================================================
 # 🧠 二、帧提取函数 —— 从bin文件中提取所有帧
 # ================================================================
@@ -142,15 +158,16 @@ def plot_frame(frame, frame_id):
 # ================================================================
 def parse_folder():
     for fname in os.listdir(input_folder):
-        fpath = os.path.join(input_folder, fname)
-        if not os.path.isfile(fpath):
-            continue
+        if fname.lower().endswith(".bin"):
+            fpath = os.path.join(input_folder, fname)
+            if not os.path.isfile(fpath):
+                continue
 
-        frames = extract_frames(fpath)
-        print(f"{fname}: 找到 {len(frames)} 帧")
+            frames = extract_frames(fpath)
+            print(f"{fname}: 找到 {len(frames)} 帧")
 
-        for fi, frame in enumerate(frames, start=1):
-            plot_frame(frame, fi)
+            for fi, frame in enumerate(frames, start=1):
+                plot_frame(frame, fi)
 
 
 # ================================================================

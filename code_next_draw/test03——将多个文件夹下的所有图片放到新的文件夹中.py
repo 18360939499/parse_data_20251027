@@ -1,15 +1,17 @@
 import os
 import shutil
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
+
 
 NORMAL_PER_GROUP=1
 
-if NORMAL_PER_GROUP:
-    src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3\pictures_normal"  # 源根目录
-    dst_folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11201539_write10_45_max2_3\pictures_normal\all"  # 收集到的新文件夹
+def choose_src_folder():
+    """弹出窗口选择源文件夹"""
+    Tk().withdraw()  # 隐藏主窗口
+    folder = askdirectory(title="请选择源文件夹")
+    return folder
 
-else:
-    src_root = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_no_normal"  # 源根目录
-    dst_folder = r"F:\2_python\test1024Gout\pythonProject1\.venv\data\test10241747\pictures_no_normal\all"  # 收集到的新文件夹
 
 def collect_images(src_root, dst_folder, exts=None):
     """
@@ -47,5 +49,12 @@ def collect_images(src_root, dst_folder, exts=None):
 
 
 if __name__ == "__main__":
+    src_root= choose_src_folder()
+    if not src_root:
+        print("❌ 未选择文件夹，程序退出")
+        exit()
+
+    #（2）自动创建目标目录 = 源目录 + "\all"
+    dst_folder = os.path.join(src_root, "all")
 
     collect_images(src_root, dst_folder)
