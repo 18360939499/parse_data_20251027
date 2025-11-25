@@ -13,7 +13,7 @@ MAX_VALUE_THRESLOD = 3
 MAX_VALUE_THRESLOD_PARAM = 0.2
 MAX_LEFT_RIGHT_INTERVAL = 1
 
-SIDE_SCAN=0
+SIDE_SCAN=1
 CALC_NEW = 1
 
 if SIDE_SCAN == 1:
@@ -33,13 +33,13 @@ systemIfo_len = 0x24
 height_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
 area_len = 0x28
 
-start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
-payload_len = 0x8000  # 51200 bytes
-range_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
-range_angle_len = 0x200
+start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+payload_len = 0x6000  # 51200 bytes
+range_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
+range_angle_len = 0x180
 
-range_angle_idx_flag = bytes.fromhex("12 00 00 00 00 01 00 00")
-range_angle_idx_len = 0x100
+range_angle_idx_flag = bytes.fromhex("12 00 00 00 C0 00 00 00")
+range_angle_idx_len = 0xC0
 
 radar_theta_excel = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test\parsed_14_frame_0001.xlsx"
 

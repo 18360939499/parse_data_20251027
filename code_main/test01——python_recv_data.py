@@ -2,7 +2,7 @@ import socket
 import os
 
 # ================== 保存 bin 文件路径 ==================
-save_bin_path = r'data\radar_raw_data_11251133.bin'
+save_bin_path = r'data\radar_raw_data_11251447.bin'
 os.makedirs(os.path.dirname(save_bin_path), exist_ok=True)
 
 try:
