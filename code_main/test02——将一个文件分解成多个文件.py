@@ -37,6 +37,6 @@ def split_bin_file(input_path, output_dir, frame_header_hex="0201040306050807"):
 
 
 if __name__ == "__main__":
-    input_file = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\radar_raw_data_11241600.bin"   # 输入的大文件
-    output_dir = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600"   # 输出的目录
+    input_file = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\radar_raw_data_11251133.bin"   # 输入的大文件
+    output_dir = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test"   # 输出的目录
     split_bin_file(input_file, output_dir)

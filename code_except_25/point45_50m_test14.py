@@ -5,7 +5,7 @@ import chardet
 from openpyxl import load_workbook
 
 
-input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\radar_raw_data_11201539_write10_45_max2_3.bin"  # 输入的大文件
+input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test\frame_0001.bin"  # 输入的大文件
 
 # 起始标志与长度
 start_flag = bytes.fromhex("0E 00 00 00 00 02 00 00")

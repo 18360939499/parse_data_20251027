@@ -10,7 +10,7 @@ start_flag = bytes.fromhex("11 00 00 00 00 02 00 00")
 # start_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
 
 # input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_10_25_10241747_write_height7_65.bin"  # 你的输入文件路径
-input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\radar_raw_data_11201304_write8_5.bin"  # 输入的大文件
+input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test\frame_0001.bin"  # 输入的大文件
 
 def detect_encoding(file_path):
     with open(file_path, 'rb') as f:

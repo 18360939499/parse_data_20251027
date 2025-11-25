@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 # 起始标志与长度
 start_flag = bytes.fromhex("0F 00 00 00 00 02 00 00")
 # start_flag = bytes.fromhex("0F 00 00 00 B0 01 00 00")
-input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\radar_raw_data_11201539_write10_45_max2_3.bin"  # 输入的大文件
+input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\code_main\data\11241600_test\frame_0001.bin"  # 输入的大文件
 
 # input_path = r"F:\2_python\test1024Gout\pythonProject1\.venv\radar_raw_data_10_25_10241747_write_height7_65.bin"  # 你的输入文件路径
 
