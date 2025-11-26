@@ -10,7 +10,8 @@ from tkinter.filedialog import askopenfilename
 
 # 起始标志与长度
 # start_flag = bytes.fromhex("0F 00 00 00 80 01 00 00")
-start_flag = bytes.fromhex("0F 00 00 00 E8 01 00 00")
+# start_flag = bytes.fromhex("0F 00 00 00 E8 01 00 00")
+start_flag = bytes.fromhex("0F 00 00 00 28 01 00 00")
 
 
 def choose_file():

@@ -38,19 +38,25 @@ area_len = 0x28
 
 # start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
 # payload_len = 0x6000  # 51200 bytes
-start_flag = bytes.fromhex("19 00 00 00 00 7A 00 00")
-payload_len = 0x7A00  # 51200 bytes
+# start_flag = bytes.fromhex("19 00 00 00 00 7A 00 00")
+# payload_len = 0x7A00  # 51200 bytes
+start_flag = bytes.fromhex("19 00 00 00 00 4A 00 00")
+payload_len = 0x4A00  # 51200 bytes
+
 
 # range_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
 # range_angle_len = 0x180
-range_flag = bytes.fromhex("11 00 00 00 E8 01 00 00")
-range_angle_len = 0x1E8
+# range_flag = bytes.fromhex("11 00 00 00 E8 01 00 00")
+# range_angle_len = 0x1E8
+range_flag = bytes.fromhex("11 00 00 00 28 01 00 00")
+range_angle_len = 0x128
 
 # range_angle_idx_flag = bytes.fromhex("12 00 00 00 C0 00 00 00")
 # range_angle_idx_len = 0xC0
-range_angle_idx_flag = bytes.fromhex("12 00 00 00 F4 00 00 00")
-range_angle_idx_len = 0xF4
-
+# range_angle_idx_flag = bytes.fromhex("12 00 00 00 F4 00 00 00")
+# range_angle_idx_len = 0xF4
+range_angle_idx_flag = bytes.fromhex("12 00 00 00 94 00 00 00")
+range_angle_idx_len = 0x94
 
 # ===============================
 # 选择文件夹（新增）
