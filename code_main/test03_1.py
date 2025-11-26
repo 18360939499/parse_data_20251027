@@ -6,16 +6,6 @@ from datetime import datetime
 from tkinter import Tk
 from tkinter.filedialog import askdirectory
 
-# ===============================
-# 选择文件夹（新增）
-# ===============================
-def choose_folder():
-    Tk().withdraw()  # 隐藏Tk窗口
-    folder = askdirectory(title="请选择要解析的文件夹")
-    if not folder:
-        raise ValueError("未选择文件夹")
-    print(f"已选择文件夹：{folder}")
-    return folder
 
 # === 常量定义 ===
 TX_NUM = 7
@@ -26,7 +16,7 @@ MAX_VALUE_THRESLOD = 3
 MAX_VALUE_THRESLOD_PARAM = 0.2
 MAX_LEFT_RIGHT_INTERVAL = 1
 
-SIDE_SCAN=1
+SIDE_SCAN=0
 CALC_NEW = 1
 
 if SIDE_SCAN == 1:
@@ -46,14 +36,32 @@ systemIfo_len = 0x24
 height_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
 area_len = 0x28
 
-start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
-payload_len = 0x6000  # 51200 bytes
-range_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
-range_angle_len = 0x180
+# start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+# payload_len = 0x6000  # 51200 bytes
+start_flag = bytes.fromhex("19 00 00 00 00 7A 00 00")
+payload_len = 0x7A00  # 51200 bytes
 
-range_angle_idx_flag = bytes.fromhex("12 00 00 00 C0 00 00 00")
-range_angle_idx_len = 0xC0
+# range_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
+# range_angle_len = 0x180
+range_flag = bytes.fromhex("11 00 00 00 E8 01 00 00")
+range_angle_len = 0x1E8
 
+# range_angle_idx_flag = bytes.fromhex("12 00 00 00 C0 00 00 00")
+# range_angle_idx_len = 0xC0
+range_angle_idx_flag = bytes.fromhex("12 00 00 00 F4 00 00 00")
+range_angle_idx_len = 0xF4
+
+
+# ===============================
+# 选择文件夹（新增）
+# ===============================
+def choose_folder():
+    Tk().withdraw()  # 隐藏Tk窗口
+    folder = askdirectory(title="请选择要解析的文件夹")
+    if not folder:
+        raise ValueError("未选择文件夹")
+    print(f"已选择文件夹：{folder}")
+    return folder
 
 def find_parsed_excel(input_folder, target_name="parsed_14_frame_0001.xlsx"):
     """在 input_folder 内自动找到指定 Excel 文件"""
