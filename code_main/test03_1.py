@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from datetime import datetime
+import struct
 
 from tkinter import Tk
 from tkinter.filedialog import askdirectory
@@ -40,23 +41,20 @@ area_len = 0x28
 # payload_len = 0x6000  # 51200 bytes
 # start_flag = bytes.fromhex("19 00 00 00 00 7A 00 00")
 # payload_len = 0x7A00  # 51200 bytes
-start_flag = bytes.fromhex("19 00 00 00 00 4A 00 00")
-payload_len = 0x4A00  # 51200 bytes
+start_flag = bytes.fromhex("19 00 00 00")
 
 
 # range_flag = bytes.fromhex("11 00 00 00 80 01 00 00")
 # range_angle_len = 0x180
 # range_flag = bytes.fromhex("11 00 00 00 E8 01 00 00")
 # range_angle_len = 0x1E8
-range_flag = bytes.fromhex("11 00 00 00 28 01 00 00")
-range_angle_len = 0x128
+range_flag = bytes.fromhex("11 00 00 00")
 
 # range_angle_idx_flag = bytes.fromhex("12 00 00 00 C0 00 00 00")
 # range_angle_idx_len = 0xC0
 # range_angle_idx_flag = bytes.fromhex("12 00 00 00 F4 00 00 00")
 # range_angle_idx_len = 0xF4
-range_angle_idx_flag = bytes.fromhex("12 00 00 00 94 00 00 00")
-range_angle_idx_len = 0x94
+range_angle_idx_flag = bytes.fromhex("12 00 00 00")
 
 # ===============================
 # 选择文件夹（新增）
@@ -113,12 +111,14 @@ def process_file(fpath):
     with open(fpath, "rb") as f:
         data = f.read()
 
-    i = data.find(start_flag)
-    if i < 0:
+    start_idx = data.find(start_flag)
+    if start_idx < 0:
         print(f"{fname}: 没有帧头")
         return None
 
-    arr = np.frombuffer(data[i + len(start_flag): i + len(start_flag) + payload_len], dtype="<f4")
+    payload_len=struct.unpack('<I', data[start_idx + 4:start_idx + 8])[0]
+
+    arr = np.frombuffer(data[start_idx + len(start_flag)+4: start_idx + len(start_flag) +4+ payload_len], dtype="<f4")
     if arr.size % NUM_DOPPLER_BINS != 0:
         print(f"{fname}: payload 长度异常")
         return None
@@ -157,7 +157,10 @@ def process_file(fpath):
     r_idx = data.find(range_flag)
     records = []
     if r_idx >= 0:
-        arr_rt = np.frombuffer(data[r_idx + len(range_flag): r_idx + len(range_flag) + range_angle_len], dtype="<f4")
+
+        range_angle_len=struct.unpack('<I', data[r_idx + 4:r_idx + 8])[0]
+
+        arr_rt = np.frombuffer(data[r_idx + len(range_flag)+4: r_idx + len(range_flag) +4+ range_angle_len], dtype="<f4")
         for j in range(0, len(arr_rt), 2):
             if j + 1 >= len(arr_rt):
                 break
@@ -168,7 +171,10 @@ def process_file(fpath):
     range_angle_idx = data.find(range_angle_idx_flag)
     records_idx = []
     if range_angle_idx >= 0:
-        arr_rt = np.frombuffer(data[range_angle_idx + len(range_angle_idx_flag): range_angle_idx + len(range_angle_idx_flag) + range_angle_idx_len], dtype="<h")
+
+        range_angle_idx_len=struct.unpack('<I', data[range_angle_idx + 4:range_angle_idx + 8])[0]
+
+        arr_rt = np.frombuffer(data[range_angle_idx + len(range_angle_idx_flag)+4: range_angle_idx + len(range_angle_idx_flag)+4 + range_angle_idx_len], dtype="<h")
         for j in range(0, len(arr_rt), 2):
             if j + 1 >= len(arr_rt):
                 break

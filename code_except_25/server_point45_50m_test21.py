@@ -8,7 +8,7 @@ from tkinter.filedialog import askdirectory
 
 
 
-start_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
+start_flag = bytes.fromhex("15 00 00 00")
 produce_file_name = "server_parsed_21_all.xlsx"  # 保存的文件名
 
 # ===============================
@@ -33,8 +33,6 @@ def detect_encoding(file_path):
 
 
 def parse_binary_file(file_path, start_flag):
-    # 自动获取数据长度
-    data_length = struct.unpack('<I', start_flag[4:8])[0]
 
     with open(file_path, "rb") as f:
         content = f.read()
@@ -54,7 +52,9 @@ def parse_binary_file(file_path, start_flag):
         if start_index == -1:
             break
 
-        data_start = start_index + len(start_flag)
+        data_length = struct.unpack('<I', content[start_index + 4:start_index + 8])[0]
+
+        data_start = start_index + len(start_flag) + 4
         data_end = data_start + data_length
         if data_end > len(content):
             print(f"{os.path.basename(file_path)} 剩余内容不足一帧，跳过")
@@ -84,15 +84,16 @@ def parse_folder(input_folder):
 
     all_data = []
     for file_name in os.listdir(input_folder):
-        file_path = os.path.join(input_folder, file_name)
-        if not os.path.isfile(file_path):
-            continue
+        if file_name.lower().endswith(".bin"):
+            file_path = os.path.join(input_folder, file_name)
+            if not os.path.isfile(file_path):
+                continue
 
-        floats_all = parse_binary_file(file_path, start_flag)
+            floats_all = parse_binary_file(file_path, start_flag)
 
-        for floats in floats_all:
-            # 每行前面加文件名
-            all_data.append([file_name] + floats)
+            for floats in floats_all:
+                # 每行前面加文件名
+                all_data.append([file_name] + floats)
 
     if all_data:
         df = pd.DataFrame(all_data)

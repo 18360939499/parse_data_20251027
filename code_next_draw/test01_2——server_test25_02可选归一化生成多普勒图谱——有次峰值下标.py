@@ -2,14 +2,13 @@ import math
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
+import struct
 
 from tkinter import Tk
 from tkinter.filedialog import askdirectory
 
 # === 全局参数 ===
-start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
-payload_len = 0x8000
+start_flag = bytes.fromhex("19 00 00 00 ")
 # start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
 # payload_len = 0x6000
 
@@ -41,7 +40,6 @@ def choose_folder():
 
 
 def parse_and_plot_bin(bin_path, global_out_dir):
-    num_floats_of_one_frame = payload_len // 4
 
     base = os.path.basename(bin_path)
     name_no_ext = os.path.splitext(base)[0]
@@ -51,16 +49,20 @@ def parse_and_plot_bin(bin_path, global_out_dir):
     with open(bin_path, "rb") as f:
         data = f.read()
 
-    i = data.find(start_flag)
-    if i < 0:
+    start_idx = data.find(start_flag)
+    if start_idx < 0:
         print(f"{bin_path}: 没有找到帧头，跳过。")
         return
 
-    payload_start = i + len(start_flag)
+    payload_len = struct.unpack('<I', data[start_idx + 4:start_idx + 8])[0]
+
+    payload_start = start_idx + len(start_flag)+4
     payload_end = payload_start + payload_len
     if payload_end > len(data):
         print(f"{bin_path}: 数据不足 51200 字节，跳过。")
         return
+
+    num_floats_of_one_frame = payload_len // 4
 
     payload = data[payload_start:payload_end]
     arr = np.frombuffer(payload, dtype="<f4")

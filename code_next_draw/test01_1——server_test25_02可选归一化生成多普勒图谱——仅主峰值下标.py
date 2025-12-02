@@ -2,6 +2,7 @@ import math
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import struct
 
 from tkinter import Tk
 from tkinter.filedialog import askdirectory
@@ -12,8 +13,7 @@ from tkinter.filedialog import askdirectory
 
 # start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
 # payload_len = 0x6000
-start_flag = bytes.fromhex("19 00 00 00 00 4A 00 00")
-payload_len = 0x4A00
+start_flag = bytes.fromhex("19 00 00 00 ")
 
 NUM_CHIRPS = 128
 NUM_GROUPS_OF_ONE_FIG = 20
@@ -41,7 +41,6 @@ def choose_folder():
 
 def parse_and_plot_bin(bin_path, global_out_dir):
     # === 常量 ===
-    num_floats_of_one_frame = payload_len // 4
 
     # === 输出目录 ===
     base = os.path.basename(bin_path)
@@ -54,22 +53,27 @@ def parse_and_plot_bin(bin_path, global_out_dir):
         data = f.read()
 
     # === 查找帧头 ===
-    i = data.find(start_flag)
-    if i < 0:
+    start_idx = data.find(start_flag)
+    if start_idx < 0:
         print(f"{bin_path}: 没有找到帧头，跳过。")
         return
 
-    payload_start = i + len(start_flag)
+    payload_len = struct.unpack('<I', data[start_idx + 4:start_idx + 8])[0]
+
+    payload_start = start_idx + len(start_flag)+4
     payload_end = payload_start + payload_len
     if payload_end > len(data):
         print(f"{bin_path}: 数据不足 51200 字节，跳过。")
         return
+
+    num_floats_of_one_frame = payload_len // 4
 
     payload = data[payload_start:payload_end]
     arr = np.frombuffer(payload, dtype="<f4")  # 小端 float32
     if arr.size != num_floats_of_one_frame:
         print(f"{bin_path}: 解析数量异常 {arr.size}，跳过。")
         return
+
 
     # === 分组 & fftshift ===
     num_dopplerbins_of_one_group = NUM_CHIRPS  # 通过查看内存排列方式，先doppler,后aoa,再range，一组里面128个doppler

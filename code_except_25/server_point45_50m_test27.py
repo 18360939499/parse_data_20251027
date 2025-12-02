@@ -9,7 +9,7 @@ from tkinter.filedialog import askdirectory
 
 # 起始标志
 # start_flag = bytes.fromhex("1B 00 00 00 00 01 00 00")
-start_flag = bytes.fromhex("1B 00 00 00 C0 00 00 00")
+start_flag = bytes.fromhex("1B 00 00 00")
 
 produce_file_name = "server_parsed_27_all.xlsx"  # 保存的文件名
 
@@ -36,9 +36,6 @@ def detect_encoding(file_path):
 
 
 def parse_binary_file(file_path, start_flag):
-    # 自动获取数据长度
-    data_length = struct.unpack('<I', start_flag[4:8])[0]
-
     with open(file_path, "rb") as f:
         content = f.read()
 
@@ -57,7 +54,9 @@ def parse_binary_file(file_path, start_flag):
         if start_index == -1:
             break
 
-        data_start = start_index + len(start_flag)
+        data_length = struct.unpack('<I', content[start_index + 4:start_index + 8])[0]
+
+        data_start = start_index + len(start_flag) + 4
         data_end = data_start + data_length
         if data_end > len(content):
             print(f"{os.path.basename(file_path)} 剩余内容不足一帧，跳过")

@@ -8,7 +8,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 # 起始标志与长度
-start_flag = bytes.fromhex("12 00 00 00 00 01 00 00")
+start_flag = bytes.fromhex("12 00 00 00")
 # start_flag = bytes.fromhex("12 00 00 00 C0 00 00 00")
 # start_flag = bytes.fromhex("12 00 00 00 F4 00 00 00")
 # start_flag = bytes.fromhex("12 00 00 00 94 00 00 00")
@@ -42,10 +42,6 @@ def parse_binary_file(file_path):
         f"parsed_18_{base_name}.xlsx"
     )
 
-
-    # 自动获取数据长度
-    data_length = struct.unpack('<I', start_flag[4:8])[0]
-
     with open(file_path, "rb") as f:
         content = f.read()
 
@@ -63,7 +59,9 @@ def parse_binary_file(file_path):
         print("未找到起始标志")
         return None
 
-    data_start = start_index + len(start_flag)
+    data_length = struct.unpack('<I', content[start_index + 4:start_index + 8])[0]
+
+    data_start = start_index + len(start_flag)+4
     data_end = data_start + data_length
     data_bytes = content[data_start:data_end]
 

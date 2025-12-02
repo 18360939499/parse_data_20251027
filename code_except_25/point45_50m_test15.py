@@ -12,7 +12,7 @@ from tkinter.filedialog import askopenfilename
 # start_flag = bytes.fromhex("0F 00 00 00 80 01 00 00")
 # start_flag = bytes.fromhex("0F 00 00 00 E8 01 00 00")
 # start_flag = bytes.fromhex("0F 00 00 00 28 01 00 00")
-start_flag = bytes.fromhex("0F 00 00 00 E0 01 00 00")
+start_flag = bytes.fromhex("0F 00 00 00")
 
 
 def choose_file():
@@ -43,10 +43,6 @@ def parse_binary_file(file_path):
         f"parsed_15_{base_name}.xlsx"
     )
 
-
-    # 自动获取数据长度
-    data_length = struct.unpack('<I', start_flag[4:8])[0]
-
     with open(file_path, "rb") as f:
         content = f.read()
 
@@ -64,7 +60,15 @@ def parse_binary_file(file_path):
         print("未找到起始标志")
         return None
 
-    data_start = start_index + len(start_flag)
+    else:
+        start_index = content.find(start_flag, start_index + len(start_flag))
+        if start_index == -1:
+            print("未找到起始标志")
+            return None
+
+    data_length = struct.unpack('<I', content[start_index + 4:start_index + 8])[0]
+
+    data_start = start_index + len(start_flag)+4
     data_end = data_start + data_length
     data_bytes = content[data_start:data_end]
 
