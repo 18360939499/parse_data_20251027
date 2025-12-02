@@ -34,12 +34,7 @@ def parse_binary_file(file_path):
         start_index = content.find(start_flag, start)
         if start_index == -1:
             break
-
         data_length = struct.unpack('<I', content[start_index + 4:start_index + 8])[0]
-        # if data_length < 0xb0:
-        #     start = start_index + 1
-        #     continue
-
         data_start = start_index + len(start_flag) + 4
         data_end = data_start + data_length
         if data_end > len(content):

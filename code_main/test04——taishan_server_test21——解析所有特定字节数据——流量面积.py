@@ -2,6 +2,10 @@ import os
 import struct
 import pandas as pd
 from tkinter import Tk, filedialog
+from datetime import datetime
+
+# ================== 保存 bin 文件路径 ==================
+timestamp = datetime.now().strftime("%Y_%m%d_%H%M_%S")
 
 def parse_bin_file(file_path):
     with open(file_path, "rb") as f:
@@ -62,7 +66,7 @@ def main():
     # 保存到 Excel
     if results:
         df = pd.DataFrame(results)
-        out_file = os.path.join(folder, "parsed_21_data.xlsx")
+        out_file = os.path.join(folder, f"parsed_21_data_{timestamp}.xlsx")
         df.to_excel(out_file, index=False)
         print(f"✅ 已保存结果到 {out_file}")
     else:

@@ -7,9 +7,10 @@ from tkinter.filedialog import askdirectory
 
 # start_flag = bytes.fromhex("19 00 00 00 00 C8 00 00")
 # payload_len = 0xC800
-start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
-payload_len = 0x6000
-
+# start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+# payload_len = 0x6000
+start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
+payload_len = 0x8000
 
 NUM_CHIRPS = 128
 

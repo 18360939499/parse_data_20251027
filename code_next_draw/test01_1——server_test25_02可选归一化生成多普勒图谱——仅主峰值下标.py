@@ -10,9 +10,10 @@ from tkinter.filedialog import askdirectory
 # start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
 # payload_len = 0x8000
 
-start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
-payload_len = 0x6000
-
+# start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+# payload_len = 0x6000
+start_flag = bytes.fromhex("19 00 00 00 00 4A 00 00")
+payload_len = 0x4A00
 
 NUM_CHIRPS = 128
 NUM_GROUPS_OF_ONE_FIG = 20

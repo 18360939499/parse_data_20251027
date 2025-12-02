@@ -8,10 +8,10 @@ from tkinter import Tk
 from tkinter.filedialog import askdirectory
 
 # === 全局参数 ===
-# start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
-# payload_len = 0x8000
-start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
-payload_len = 0x6000
+start_flag = bytes.fromhex("19 00 00 00 00 80 00 00")
+payload_len = 0x8000
+# start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
+# payload_len = 0x6000
 
 NUM_CHIRPS = 128
 NUM_GROUPS_OF_ONE_FIG = 20
@@ -87,6 +87,7 @@ def parse_and_plot_bin(bin_path, global_out_dir):
         for k, g_idx in enumerate(range(start_g, end_g)):
             ax = axes[k]
             y = shifted[g_idx]
+            y = 20 * np.log10(np.abs(y))
 
             # if NORMAL_PER_GROUP:
             #     y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)
