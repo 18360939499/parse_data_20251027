@@ -15,8 +15,8 @@ except OSError:
     raise RuntimeError("无法创建 bin 文件")
 
 # ================== TCP 连接参数 ==================
-radar_ip_address = "192.168.1.200"
-tcp_port_num = 29172
+radar_ip_address = "192.168.1.100"
+tcp_port_num = 5005
 MAX_PACKET_SIZE_BYTES = 160000
 
 # 创建 TCP Socket
