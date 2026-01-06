@@ -399,7 +399,7 @@ def up_data_thread():
 
         return
 
-    if len(buf_data) >= 4269400:  # 170000
+    if len(buf_data) >= MAX_RADAR_LEN:  # 170000
 
         print("buf_data的长度", len(buf_data), flush=True)
 
@@ -419,6 +419,7 @@ def up_data_thread():
 
 def read_radar_data(recv_buf_data):
     # header_size = 100
+    packet_header_size = 28
     header_size = 80
     radar_data_size = 65536
     # all_data = 65636
@@ -442,17 +443,21 @@ def read_radar_data(recv_buf_data):
         print(f"flag: {flag}")
         return flag, recv_buf_data
     else:
-        # frame_len_bytes = recv_buf_data[start_idx + 12 : start_idx + 16]
-        # frame_len = struct.unpack('<I', frame_len_bytes)[0]  # 小端无符号整数
-        # print("解析出的帧长度:", frame_len)
+        print(f"2_start_idx: {start_idx}")
+        second_marge_buff = recv_buf_data[start_idx:]
+        packet_header = get_packet_header(second_marge_buff[:packet_header_size])
 
-        if len(recv_buf_data) < MAX_RADAR_LEN:
-            flag = 11  # 数据不完整
-            print(f"flag: {flag}")
-            return flag, recv_buf_data  # 保留数据等下一轮接收
-        else:
-            original_data = recv_buf_data[start_idx:start_idx + MAX_RADAR_LEN]
-            print("original_data的长度", len(original_data), flush=True)
+    frame_idx = packet_header['frameId']
+    print(f"1_frame_idx: {frame_idx}")
+
+    # 当前recv_buf_data数据未包含一个完整frame的数据，返回继续读取数据
+    if packet_header["totalLength"] > len(recv_buf_data):
+        flag = 11  # 数据不完整
+        print(f"flag: {flag}")
+        return flag, recv_buf_data
+    else:
+        original_data = second_marge_buff[:packet_header["totalLength"]].copy()
+        print("original_data的长度", len(original_data))
 
         # 当前buf数据未包含一个完整header，返回继续读取
         if len(recv_buf_data) < header_size:
@@ -481,8 +486,10 @@ def read_radar_data(recv_buf_data):
             lengthlength = systeminfo['length']
             print("lengthlength的长度", lengthlength, flush=True)
 
+    # 剩余部分的处理来了_start
+    recv_buf_data = recv_buf_data[start_idx + packet_header["totalLength"]:]
+    # 剩余部分的处理来了_end
     flag = 0xFF
-    recv_buf_data.clear()
     return flag, recv_buf_data
 
 
@@ -505,6 +512,20 @@ def get_doppler_idx(gd_bArr):
     gd = np.array(struct.unpack(gd_struct, gd_bArr))
     return gd
 
+def get_packet_header(header_bArr):
+    header_struct = "<HHHHIIIII"
+    header_unpack = struct.unpack(header_struct, header_bArr)
+
+    header = {
+        "syncWord": [hex(header_unpack[0]), hex(header_unpack[1]), hex(header_unpack[2]), hex(header_unpack[3])],
+        "frameId": header_unpack[4],
+        "coreId": header_unpack[5],
+        "TLVNums": header_unpack[6],
+        "totalLength": header_unpack[7],
+        "detectObjNums": header_unpack[8]
+    }
+
+    return header
 
 def get_systeminfo(header_addr):  # 用来解析头部数据的函数
 
