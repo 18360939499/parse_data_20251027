@@ -17,7 +17,7 @@ MAX_VALUE_THRESLOD = 3
 MAX_VALUE_THRESLOD_PARAM = 0.2
 MAX_LEFT_RIGHT_INTERVAL = 1
 
-SIDE_SCAN=0
+SIDE_SCAN=1
 CALC_NEW = 1
 
 if SIDE_SCAN == 1:
@@ -67,7 +67,7 @@ def choose_folder():
     print(f"已选择文件夹：{folder}")
     return folder
 
-def find_parsed_excel(input_folder, target_name="parsed_14_frame_0001.xlsx"):
+def find_parsed_excel(input_folder, target_name="parsed_14_1.xlsx"):
     """在 input_folder 内自动找到指定 Excel 文件"""
     for root, dirs, files in os.walk(input_folder):
         for f in files:
