@@ -65,11 +65,25 @@ def parse_binary_file(file_path, start_flag):
             floats = [struct.unpack('<f', data_bytes[i:i + 4])[0] for i in range(0, len(data_bytes), 4)]
         else:
             # === 1. 前两个 uint32 ===
-            uint_part = [struct.unpack('<I', data_bytes[i:i + 4])[0] for i in range(0, 8, 4)]
-            # === 2. 剩下部分是 float32 ===
-            float_part = [struct.unpack('<f', data_bytes[i:i + 4])[0] for i in range(8, len(data_bytes), 4)]
-            # === 3. 合并两个uint + float部分 ===
-            floats = uint_part + float_part
+            uint_part=[]
+            for i in range(0, 8, 4):
+                value = struct.unpack('<I', data_bytes[i:i + 4])[0]
+                uint_part.append(value)
+
+            # === 2. 从第 8 个字节开始，解析剩余数据量-4为 float32
+            float_part = []
+            for i in range(8, len(data_bytes)-4, 4):
+                value = struct.unpack('<f', data_bytes[i:i + 4])[0]
+                float_part.append(value)
+
+            # ===
+            uint_part2 = []
+            for i in range(len(data_bytes)-4, len(data_bytes), 4):
+                value = struct.unpack('<I', data_bytes[i:i + 4])[0]
+                uint_part2.append(value)
+
+            # === 3. 合并两个uint32 + float部分 ===
+            floats = uint_part + float_part+uint_part2
 
         floats_all.append(floats)
 
@@ -95,10 +109,29 @@ def parse_folder(input_folder):
                 # 每行前面加文件名
                 all_data.append([file_name] + floats)
 
+    header_columns = [
+        "文件名",
+        "点个数",
+        "点个数",
+        "定点雷达到水面高度",
+        "水面高度",
+        "截面积",
+        "平均流速",
+        "流量",
+        "riverAngle",
+        "riverVecPointStep",
+        "numTotalAzimDetPeaks"
+    ]
+    # 校验列数是否匹配（非常推荐）
+    if len(header_columns) != len(all_data[0]):
+        raise ValueError(
+            f"列名数量({len(header_columns)}) 与数据列数({len(all_data[0])}) 不一致"
+        )
+
     if all_data:
-        df = pd.DataFrame(all_data)
+        df = pd.DataFrame(all_data, columns=header_columns)
         df.to_excel(os.path.join(input_folder, produce_file_name),
-                    index=False, header=False)
+                    index=False, header=True)
         print(f"已解析 {len(all_data)} 行，保存到：{os.path.join(input_folder, 'server_parsed_21_all.xlsx')}")
     else:
         print("未解析到任何数据帧")
