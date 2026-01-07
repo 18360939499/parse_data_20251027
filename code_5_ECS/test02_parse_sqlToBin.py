@@ -32,7 +32,7 @@ def sql_to_bin(sql_file):
     matches = pattern.findall(content)
 
     for id_val, hex_str in matches:
-        file_path = os.path.join(output_dir, f"{id_val}.bin")
+        file_path = os.path.join(output_dir, f"frame{id_val}.bin")
         with open(file_path, "wb") as f:
             f.write(bytes.fromhex(hex_str))
         print(f"生成文件: {file_path}")
