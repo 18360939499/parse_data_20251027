@@ -1,5 +1,17 @@
 import os
 
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
+
+def choose_sql_file():
+    """弹窗选择 .bin 文件"""
+    Tk().withdraw()
+    file_path = askopenfilename(
+        title="请选择雷达原始 sql 文件",
+        filetypes=[("sql 文件", "*.sql"), ("所有文件", "*.*")]
+    )
+    return file_path
+
 def split_file_by_size(
     input_file,
     output_dir,
@@ -35,12 +47,29 @@ def split_file_by_size(
             index += 1
 
 
+
+
 if __name__ == "__main__":
-    input_sql = "v_data202509080942.sql"
-    output_folder = "split_sql"
+    # input_sql = "v_data202509080942.sql"
+    # output_folder = "split_sql"
+
+    # 1️⃣ 选择输入文件
+    input_sql = choose_sql_file()
+    if not input_sql:
+        print("❌ 未选择文件，程序退出")
+        exit()
+
+    # 2️⃣ 自动生成输出目录：同目录 + 文件名（无后缀）
+    base_dir = os.path.dirname(input_sql)
+    base_name = os.path.splitext(os.path.basename(input_sql))[0]
+    suffix = "_split"
+    output_folder = os.path.join(base_dir, base_name+suffix)
+
+    print(f"✔ 输入文件：{input_sql}")
+    print(f"✔ 输出文件夹：{output_folder}")
 
     split_file_by_size(
         input_file=input_sql,
         output_dir=output_folder,
-        chunk_size=100 * 1024  # 100KB
+        chunk_size=5000 * 1024  # 100KB,一个文件100KB
     )

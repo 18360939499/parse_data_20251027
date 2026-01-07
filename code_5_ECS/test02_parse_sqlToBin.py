@@ -25,7 +25,7 @@ def sql_to_bin(sql_file):
 
     # 匹配INSERT语句
     pattern = re.compile(
-        r"INSERT INTO `v_data`.*?\((\d+),\s*0x([0-9a-fA-F]+),",
+        r"INSERT INTO `test0104`.*?\((\d+),\s*0x([0-9a-fA-F]+),",
         re.DOTALL
     )
 
