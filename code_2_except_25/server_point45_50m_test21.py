@@ -9,6 +9,8 @@ from tkinter.filedialog import askdirectory
 
 
 start_flag = bytes.fromhex("15 00 00 00")
+flagLength=0x28
+
 produce_file_name = "server_parsed_21_all.xlsx"  # 保存的文件名
 
 # ===============================
@@ -53,6 +55,14 @@ def parse_binary_file(file_path, start_flag):
             break
 
         data_length = struct.unpack('<I', content[start_index + 4:start_index + 8])[0]
+
+        # ==============================
+        # ✅ 关键判断点
+        # ==============================
+        if data_length != flagLength:
+            # 不是合法帧，继续找下一个 start_flag
+            start = start_index + 1
+            continue
 
         data_start = start_index + len(start_flag) + 4
         data_end = data_start + data_length
