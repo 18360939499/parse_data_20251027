@@ -60,11 +60,11 @@ def parse_binary_file(file_path):
         print("未找到起始标志")
         return None
 
-    else:
-        start_index = content.find(start_flag, start_index + len(start_flag))
-        if start_index == -1:
-            print("未找到起始标志")
-            return None
+    # else:
+    #     start_index = content.find(start_flag, start_index + len(start_flag))
+    #     if start_index == -1:
+    #         print("未找到起始标志")
+    #         return None
 
     data_length = struct.unpack('<I', content[start_index + 4:start_index + 8])[0]
 

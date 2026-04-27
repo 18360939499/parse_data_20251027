@@ -8,10 +8,10 @@ from tkinter.filedialog import askdirectory
 
 
 
-start_flag = bytes.fromhex("15 00 00 00")
-flagLength=0x34
+start_flag = bytes.fromhex("05 00 00 00")
+flagLength=0x38
 
-produce_file_name = "server_parsed_21_all.xlsx"  # 保存的文件名
+produce_file_name = "server_parsed_05_all.xlsx"  # 保存的文件名
 
 # ===============================
 # 选择文件夹（新增）
@@ -74,26 +74,26 @@ def parse_binary_file(file_path, start_flag):
         if 0:
             floats = [struct.unpack('<f', data_bytes[i:i + 4])[0] for i in range(0, len(data_bytes), 4)]
         else:
-            # === 1. 前两个 uint32 ===
-            uint_part=[]
-            for i in range(0, 8, 4):
-                value = struct.unpack('<I', data_bytes[i:i + 4])[0]
-                uint_part.append(value)
+            # === 1.  uint32 ===
+            data_part1=[]
+            for i in range(36, 40, 4):
+                value = struct.unpack('<i', data_bytes[i:i + 4])[0]
+                data_part1.append(value)
 
             # === 2. 从第 8 个字节开始，解析剩余数据量-4为 float32
-            float_part = []
-            for i in range(8, len(data_bytes)-4, 4):
-                value = struct.unpack('<f', data_bytes[i:i + 4])[0]
-                float_part.append(value)
+            data_part2 = []
+            for i in range(40, len(data_bytes)-4, 2):
+                value = struct.unpack('<h', data_bytes[i:i + 2])[0]
+                data_part2.append(value)
 
             # ===
-            uint_part2 = []
-            for i in range(len(data_bytes)-4, len(data_bytes), 4):
-                value = struct.unpack('<I', data_bytes[i:i + 4])[0]
-                uint_part2.append(value)
+            data_part3 = []
+            for i in range(len(data_bytes)-4, len(data_bytes)-2 , 2):
+                value = struct.unpack('<H', data_bytes[i:i + 2])[0]
+                data_part3.append(value)
 
             # === 3. 合并两个uint32 + float部分 ===
-            floats = uint_part + float_part+uint_part2
+            floats = data_part1 + data_part2 + data_part3
 
         floats_all.append(floats)
 
@@ -121,19 +121,14 @@ def parse_folder(input_folder):
 
     header_columns = [
         "文件名",
-        "点个数",
-        "点个数",
-        "定点雷达到水面高度",
-        "水面高度",
-        "截面积",
-        "平均流速",
-        "流量",
-        "河宽",
-        "当前水位侧扫雷达与缆线两岸的夹角的弧度",
-        "侧扫雷达的起点距",
-        "当前水位与左岸夹角",
-        "riverVecPointStep",
-        "numTotalAzimDetPeaks"
+        "mpu_tempX100",
+        "mpu_accelX_mg",
+        "mpu_accelY_mg",
+        "mpu_accelZ_mg",
+        "mpu_gyroX_mdps",
+        "mpu_gyroY_mdps",
+        "mpu_gyroZ_mdps",
+        "mpu_isValid"
     ]
     # 校验列数是否匹配（非常推荐）
     if len(header_columns) != len(all_data[0]):
@@ -145,7 +140,7 @@ def parse_folder(input_folder):
         df = pd.DataFrame(all_data, columns=header_columns)
         df.to_excel(os.path.join(input_folder, produce_file_name),
                     index=False, header=True)
-        print(f"已解析 {len(all_data)} 行，保存到：{os.path.join(input_folder, 'server_parsed_21_all.xlsx')}")
+        print(f"已解析 {len(all_data)} 行，保存到：{os.path.join(input_folder, 'server_parsed_05_all.xlsx')}")
     else:
         print("未解析到任何数据帧")
 

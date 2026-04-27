@@ -22,7 +22,7 @@ def collect_images(src_root, dst_folder, exts=None):
     :param exts: 图片扩展名集合，默认常见图片格式
     """
     if exts is None:
-        exts = {".jpg", ".jpeg", ".png", ".bmp", ".gif"}
+        exts = {".bin"}
 
     # 创建目标文件夹
     os.makedirs(dst_folder, exist_ok=True)
@@ -40,14 +40,16 @@ def collect_images(src_root, dst_folder, exts=None):
                 src_path = os.path.join(root, file)
                 dst_path = os.path.join(dst_folder, file)
 
-                # 避免文件名冲突
-                if os.path.exists(dst_path):
-                    name, ext = os.path.splitext(file)
-                    i = 1
-                    while os.path.exists(dst_path):
-                        dst_path = os.path.join(dst_folder, f"{name}_{i}{ext}")
-                        i += 1
+                # if 0:
+                #     # 避免文件名冲突
+                #     if os.path.exists(dst_path):
+                #         name, ext = os.path.splitext(file)
+                #         i = 1
+                #         while os.path.exists(dst_path):
+                #             dst_path = os.path.join(dst_folder, f"{name}_{i}{ext}")
+                #             i += 1
 
+                # 🔁 同名文件直接覆盖
                 shutil.copy2(src_path, dst_path)
                 count += 1
 
@@ -61,6 +63,6 @@ if __name__ == "__main__":
         exit()
 
     #（2）自动创建目标目录 = 源目录 + "\all"
-    dst_folder = os.path.join(src_root, "all")
+    dst_folder = os.path.join(src_root, "all2")
 
     collect_images(src_root, dst_folder)

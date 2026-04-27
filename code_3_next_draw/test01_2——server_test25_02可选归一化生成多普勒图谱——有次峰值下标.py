@@ -12,18 +12,26 @@ start_flag = bytes.fromhex("19 00 00 00 ")
 # start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
 # payload_len = 0x6000
 
-NUM_CHIRPS = 128
+NUM_CHIRPS = 256
 NUM_GROUPS_OF_ONE_FIG = 20
 NUM_COLS = 5  # 一行5张图片
 NUM_ROWS = NUM_GROUPS_OF_ONE_FIG // NUM_COLS
 
-NORMAL_PER_GROUP = 1  # 是否对每个组的多普勒信号进行归一化，1为是，0为否
 SECOND_PEAK_RATIO = 0.2  # 次峰阈值比例（主峰值的20%）
+NORMAL_PER_GROUP = 0  # 是否对每个组的多普勒信号进行归一化，1为是，0为否
+LOG_OR_ABS = 0 #如果是1则是看强度数据，如果是0则看最高峰的绝对值
 
-if NORMAL_PER_GROUP:
-    put_folder = "pictures_normal_youcifeng"
+if NORMAL_PER_GROUP == 1:
+    normal_str = "normal"
 else:
-    put_folder = "pictures_no_normal"
+    normal_str = "no_normal"
+
+if LOG_OR_ABS == 1:
+    mode_str = "log"
+else:
+    mode_str = "abs"
+
+put_folder = "pictures_" + normal_str + "_" + mode_str
 
 
 
@@ -89,7 +97,8 @@ def parse_and_plot_bin(bin_path, global_out_dir):
         for k, g_idx in enumerate(range(start_g, end_g)):
             ax = axes[k]
             y = shifted[g_idx]
-            y = 20 * np.log10(np.abs(y))
+            if LOG_OR_ABS:
+                y = 20 * np.log10(np.abs(y))
 
             # if NORMAL_PER_GROUP:
             #     y = (y - np.min(y)) / (np.max(y) - np.min(y) + 1e-8)

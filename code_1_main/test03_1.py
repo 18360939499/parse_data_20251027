@@ -12,7 +12,7 @@ from tkinter.filedialog import askdirectory
 TX_NUM = 7
 
 
-NUM_DOPPLER_BINS = 128  # 多普勒 bin 数量
+NUM_DOPPLER_BINS = 256  # 多普勒 bin 数量
 MAX_VALUE_THRESLOD = 3
 MAX_VALUE_THRESLOD_PARAM = 0.2
 MAX_LEFT_RIGHT_INTERVAL = 1
@@ -34,7 +34,7 @@ if ALL_AVER != 1:
 
 doppler_flag = bytes.fromhex("05 00 00 00 24 00 00 00")
 systemIfo_len = 0x24
-height_flag = bytes.fromhex("15 00 00 00 28 00 00 00")
+height_flag = bytes.fromhex("15 00 00 00 34 00 00 00")
 area_len = 0x28
 
 # start_flag = bytes.fromhex("19 00 00 00 00 60 00 00")
@@ -67,7 +67,7 @@ def choose_folder():
     print(f"已选择文件夹：{folder}")
     return folder
 
-def find_parsed_excel(input_folder, target_name="parsed_14_1.xlsx"):
+def find_parsed_excel(input_folder, target_name="parsed_14_frame_0001.xlsx"):
     """在 input_folder 内自动找到指定 Excel 文件"""
     for root, dirs, files in os.walk(input_folder):
         for f in files:

@@ -12,7 +12,7 @@ def parse_bin_file(file_path):
         data = f.read()
 
     # 帧头模式
-    pattern = bytes.fromhex("15 00 00 00 28 00 00 00")
+    pattern = bytes.fromhex("15 00 00 00 34 00 00 00")
     idx = data.find(pattern)
     if idx == -1:
         return None  # 没找到帧头

@@ -25,7 +25,8 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0x416EA8) # 170000
+MAX_RADAR_LEN = (0xE1B4) # 170000
+UPLOAD_INTERVAL_SECOND=10 #20min
 
 matrix_history = deque(maxlen=5)
 threshold_z = 0.3
@@ -279,7 +280,7 @@ def periodic_db_upload():
     global to_web
 
     while True:
-        time.sleep(60)  # 每300秒（5分钟）执行一次
+        time.sleep(UPLOAD_INTERVAL_SECOND)  # 每300秒（5分钟）执行一次
         if original_data is not None and to_web is not None:
             try:
                 insert_data(original_data, to_web)
@@ -364,6 +365,7 @@ def run_time_thread():
     while True:
         timethread()
         time.sleep(10)
+        print("1")
 
 
 def timethread():
