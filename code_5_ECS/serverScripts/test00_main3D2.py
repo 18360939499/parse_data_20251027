@@ -267,7 +267,7 @@ def insert_data(latest_original_data, latest_point_data):
             matrix_rounded = np.round(latest_point_data, 2)
             matrix_str = json.dumps(matrix_rounded.tolist())
 
-            sql = "INSERT INTO test0213 (matrix_original, speed) VALUES (%s, %s)"
+            sql = "INSERT INTO test20260527 (matrix_original, speed) VALUES (%s, %s)"
             cursor.execute(sql, (matrix_bytes, matrix_str))
             db.commit()
             print(f"已上传字节流和矩阵数据")
