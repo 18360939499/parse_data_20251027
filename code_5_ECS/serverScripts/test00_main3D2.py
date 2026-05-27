@@ -105,7 +105,7 @@ def get_temperature():
 
 @app1.route('/get_eva', methods=['GET'])
 def get_eva():
-    global buf_data5400, e_num, a_num, v_num
+    global buf_data5407, e_num, a_num, v_num
 
     print(e_num, a_num, v_num)
     a33 = e_num
@@ -321,16 +321,16 @@ systeminfo = {  # 默认的参数配置，以后可以根据默认文件来读�
 board_temperature = 0
 
 buf_data = bytearray()
-buf_data5300 = bytearray()
-buf_data5400 = bytearray()
+buf_data5307 = bytearray()
+buf_data5407 = bytearray()
 
 be_save = bytearray()  # 更改doppler与range点数后  要修改的起始参数
 radar_data = np.zeros((256, 128))  # 继承自be_save
 to_web = np.zeros((1, 100))  # 准备给前端的矩阵
 
 radar = None
-radar5300 = None
-radar5400 = None
+radar5307 = None
+radar5407 = None
 
 radar_cycle = '1000'
 radar_cycle_old = '1000'
@@ -338,8 +338,8 @@ radar_range_old = '6'
 radar_range = '6'
 
 connect_state = 0
-connect_state5300 = 0
-connect_state5400 = 0
+connect_state5307 = 0
+connect_state5407 = 0
 
 starting_rows = 0
 starting_rows_old = 0
@@ -598,16 +598,16 @@ def send_cycle_command_to_radar(cycle):
 
 
 def send_restart_bytes(restart_bytes):
-    global radar5300
+    global radar5307
 
-    if radar5300:  # 检查是否连接
+    if radar5307:  # 检查是否连接
         try:
-            radar5300.send(restart_bytes)  # 直接发送，不要 fromhex
+            radar5307.send(restart_bytes)  # 直接发送，不要 fromhex
             print('发送复位信息成功', flush=True)
         except Exception as e:
             print("发送失败:", e, flush=True)
     else:
-        print("5300端口尚未连接，无法发送", flush=True)
+        print("5307端口尚未连接，无法发送", flush=True)
 
 
 def myhex(n):  # 整数转换成16进制32位，不够32位就补0
@@ -634,7 +634,7 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
         global connect_state
         global buf_data
         connect_state = 1
-        print("5200，网关已经连接到服务器", flush=True)
+        print("5207，网关已经连接到服务器", flush=True)
         radar = conn
         while True:
             try:
@@ -678,7 +678,7 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
 
 
 # -------------------------------------------------------------------------------------------------------------------------
-class ServerThread5300:  # 用于启动tcp/ip服务端来接收雷达数据，启用保活功能，设置大缓存来保证大数据传输
+class ServerThread5307:  # 用于启动tcp/ip服务端来接收雷达数据，启用保活功能，设置大缓存来保证大数据传输
 
     def __init__(self, ipaddr, port, num):
         self.ipaddr = ipaddr
@@ -686,26 +686,26 @@ class ServerThread5300:  # 用于启动tcp/ip服务端来接收雷达数据，�
         self.num = num
 
     def server_link(self, conn, addr):
-        global radar5300
-        global connect_state5300
+        global radar5307
+        global connect_state5307
         # if (conn.recv(65636)).decode('utf-8') == '12345678':
-        connect_state5300 = 1
-        print("5300，网关已经连接到服务器", flush=True)
-        radar5300 = conn
+        connect_state5307 = 1
+        print("5307，网关已经连接到服务器", flush=True)
+        radar5307 = conn
         while True:
             try:
-                data = radar5300.recv(1024 * 8)
+                data = radar5307.recv(1024 * 8)
                 if data:
                     # print("from {0}:".format(addr), data.decode('utf-8'))
-                    print("5300端口L", len(data), flush=True)
-                    buf_data5300.extend(data)
+                    print("5307端口L", len(data), flush=True)
+                    buf_data5307.extend(data)
                     # conn.send("Yes sir!".encode())
                 else:
                     break
             except Exception:
                 break
         conn.close()
-        connect_state5300 = 0
+        connect_state5307 = 0
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -728,15 +728,15 @@ class ServerThread5300:  # 用于启动tcp/ip服务端来接收雷达数据，�
             p.daemon = True
             p.start()
 
-    def send_data5300(self, data, radar5300):
-        radar5300.send(data)
+    def send_data5307(self, data, radar5307):
+        radar5307.send(data)
 
 
 # -------------------------------------------------------------------------------------------------------------------------
 
 
 # -------------------------------------------------------------------------------------------------------------------------
-class ServerThread5400:  # 用于启动tcp/ip服务端来接收雷达数据，启用保活功能，设置大缓存来保证大数据传输
+class ServerThread5407:  # 用于启动tcp/ip服务端来接收雷达数据，启用保活功能，设置大缓存来保证大数据传输
 
     def __init__(self, ipaddr, port, num):
         self.ipaddr = ipaddr
@@ -744,21 +744,21 @@ class ServerThread5400:  # 用于启动tcp/ip服务端来接收雷达数据，�
         self.num = num
 
     def server_link(self, conn, addr):
-        global radar5400
-        global connect_state5400
+        global radar5407
+        global connect_state5407
         # if (conn.recv(65636)).decode('utf-8') == '12345678':
-        connect_state5400 = 1
-        print("5400，网关已经连接到服务器", flush=True)
-        radar5400 = conn
+        connect_state5407 = 1
+        print("5407，网关已经连接到服务器", flush=True)
+        radar5407 = conn
         while True:
             try:
-                data = radar5400.recv(1024 * 8)
+                data = radar5407.recv(1024 * 8)
                 if data:
 
                     # print("from {0}:".format(addr), data.decode('utf-8'))
-                    print("5400端口L", len(data), flush=True)
-                    buf_data5400.extend(data)
-                    print(buf_data5400)
+                    print("5407端口L", len(data), flush=True)
+                    buf_data5407.extend(data)
+                    print(buf_data5407)
 
                     # conn.send("Yes sir!".encode())
                 else:
@@ -766,7 +766,7 @@ class ServerThread5400:  # 用于启动tcp/ip服务端来接收雷达数据，�
             except Exception:
                 break
         conn.close()
-        connect_state5400 = 0
+        connect_state5407 = 0
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -789,8 +789,8 @@ class ServerThread5400:  # 用于启动tcp/ip服务端来接收雷达数据，�
             p.daemon = True
             p.start()
 
-    def send_data5400(self, data, radar5400):
-        radar5400.send(data)
+    def send_data5407(self, data, radar5407):
+        radar5407.send(data)
 
 
 e_num = a_num = v_num = None
@@ -798,9 +798,9 @@ e_num = a_num = v_num = None
 
 # 提取并清空函数
 def extract_and_clear():
-    global buf_data5400, e_num, a_num, v_num
+    global buf_data5407, e_num, a_num, v_num
 
-    data_str = buf_data5400.decode('utf-8', errors='ignore')
+    data_str = buf_data5407.decode('utf-8', errors='ignore')
 
     # 提取数字
     electricity = re.search(r'Electricity: (\d+)%', data_str)
@@ -816,7 +816,7 @@ def extract_and_clear():
         print("未能成功提取三项数据")
 
     # 清空数据
-    buf_data5400.clear()
+    buf_data5407.clear()
 
     # 每5秒重复执行
     threading.Timer(30, extract_and_clear).start()
@@ -887,7 +887,7 @@ def watchdog():
             # 检查 TCP/IP 服务器线程
             if "tcp_ip_server" in threads and not threads["tcp_ip_server"].is_alive():
                 print("[看门狗] TCP/IP 服务器线程已停止，正在重启...", flush=True)
-                server = ServerThread('', 5200, 5)
+                server = ServerThread('', 5207, 5)
                 threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
                 threads["tcp_ip_server"].start()
 
@@ -926,22 +926,22 @@ def check_flask_api():
 if __name__ == '__main__':
     with threads_lock:
         # 启动 TCP/IP 服务器线程
-        server = ServerThread('', 5200, 5)
+        server = ServerThread('', 5207, 5)
         threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
         threads["tcp_ip_server"].start()
         print("TCP/IP 服务器已启动")
 
-        server_5300 = ServerThread5300('', 5300, 5)
-        tcp_ip_server_5300 = threading.Thread(target=server_5300.server_start)
-        # tcp_ip_server_5300.daemon = True
-        tcp_ip_server_5300.start()  # 启动tcp/ip服务端线程
-        print('5300tcp/ip已启动')
+        server_5307 = ServerThread5307('', 5307, 5)
+        tcp_ip_server_5307 = threading.Thread(target=server_5307.server_start)
+        # tcp_ip_server_5307.daemon = True
+        tcp_ip_server_5307.start()  # 启动tcp/ip服务端线程
+        print('5307tcp/ip已启动')
 
-        server_5400 = ServerThread5400('', 5400, 5)
-        tcp_ip_server_5400 = threading.Thread(target=server_5400.server_start)
-        # tcp_ip_server_5300.daemon = True
-        tcp_ip_server_5400.start()  # 启动tcp/ip服务端线程
-        print('5400tcp/ip已启动')
+        server_5407 = ServerThread5407('', 5407, 5)
+        tcp_ip_server_5407 = threading.Thread(target=server_5407.server_start)
+        # tcp_ip_server_5307.daemon = True
+        tcp_ip_server_5407.start()  # 启动tcp/ip服务端线程
+        print('5407tcp/ip已启动')
 
         # 启动矩阵处理线程
         threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
