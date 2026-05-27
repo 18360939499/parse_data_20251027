@@ -25,8 +25,8 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0xE1B4) # 170000
-UPLOAD_INTERVAL_SECOND=10 #20min
+MAX_RADAR_LEN = (0x02C204) # 170000
+UPLOAD_INTERVAL_SECOND=1 #20min
 
 matrix_history = deque(maxlen=5)
 threshold_z = 0.3
@@ -267,7 +267,7 @@ def insert_data(latest_original_data, latest_point_data):
             matrix_rounded = np.round(latest_point_data, 2)
             matrix_str = json.dumps(matrix_rounded.tolist())
 
-            sql = "INSERT INTO test0104 (matrix_original, speed) VALUES (%s, %s)"
+            sql = "INSERT INTO test0213 (matrix_original, speed) VALUES (%s, %s)"
             cursor.execute(sql, (matrix_bytes, matrix_str))
             db.commit()
             print(f"已上传字节流和矩阵数据")
@@ -364,8 +364,7 @@ memory_threshold = 0.8  # 80% 内存使用率
 def run_time_thread():
     while True:
         timethread()
-        time.sleep(10)
-        print("1")
+        time.sleep(0.1) #testxy_time.sleep(10)
 
 
 def timethread():
@@ -376,7 +375,7 @@ def timethread():
 def run_up_data_thread():
     while True:
         up_data_thread()
-        time.sleep(9.8)
+        time.sleep(0.2) #testxy_time.sleep(9.8)
 
 
 def up_data_thread():
