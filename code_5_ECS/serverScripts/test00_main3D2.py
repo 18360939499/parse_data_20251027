@@ -408,8 +408,6 @@ def up_data_thread():
 
         if (flag != 0xFF):
             return;
-        # ----------------------------------------------------丢掉修改完参数的残留数据
-        # point_arr = parse_be_save(be_save)
 
         buf_data = buf_data[MAX_RADAR_LEN:]  # 清除上一帧的数据
 
@@ -443,10 +441,6 @@ def read_radar_data(recv_buf_data):
         print(f"flag: {flag}")
         return flag, recv_buf_data
     else:
-        # frame_len_bytes = recv_buf_data[start_idx + 12 : start_idx + 16]
-        # frame_len = struct.unpack('<I', frame_len_bytes)[0]  # 小端无符号整数
-        # print("解析出的帧长度:", frame_len)
-
         if len(recv_buf_data) < MAX_RADAR_LEN:
             flag = 11  # 数据不完整
             print(f"flag: {flag}")
@@ -485,20 +479,6 @@ def read_radar_data(recv_buf_data):
     flag = 0xFF
     recv_buf_data.clear()
     return flag, recv_buf_data
-
-
-# def parse_be_save(be_save):
-#     if not be_save or len(be_save) != 408:
-#         print("be_save长度不正确或为空")
-#         return np.array([])  # 返回空矩阵
-
-#     data_bytes = be_save[8:]  # 跳过前8字节
-#     # 直接一次性解包100个float（408 - 8 = 400字节，400/4=100个float）
-#     float_tuple = struct.unpack('<100f', data_bytes)
-#     arr = np.array(float_tuple)
-#     arr = np.round(arr, 3)
-#     return arr
-
 
 def get_doppler_idx(gd_bArr):
     global systeminfo
@@ -544,7 +524,6 @@ def exchange_left_right_matrix(array):  # 交换矩阵左右两半部分的函�
 
 
 def Polar_to_Rectangular(r, theta):  # 极坐标转直角坐标，输入的thata需为角度值,如果转换效果不及预期，调换x和y的位置  designed by 秦涛
-    # theta = theta * (np.pi / 180)    #传进来的数值就是弧度单位的，所以不需要转换为弧度值
     for i in range(len(r)):
         for j in range(len(r[i])):
             y = r[i][j] * np.cos(theta[i][j])
@@ -612,37 +591,9 @@ def setting():  # 启动参数设置线程
             systeminfo['numRangeBins'] = 256
             print('已发送', radar_range, '参数', flush=True)
 
-
-# def setRA():
-#     global starting_rows
-#     global starting_rows_old
-#     global ending_rows
-#     global ending_rows_old
-
-#     global staring_angles
-#     global staring_angles_old
-#     global ending_angles
-#     global ending_angles_old
-#     if starting_rows != starting_rows_old or ending_rows != ending_rows_old or staring_angles !=staring_angles_old or ending_angles !=ending_angles_old:
-#         a = my8hex(starting_rows)
-#         b = my8hex(ending_rows)
-#         c = my8hex(staring_angles)
-#         d = my8hex(ending_angles)
-#         send_cycle_command_to_radar(a + b + c + d)
-#         starting_rows_old = starting_rows
-#         ending_rows_old = ending_rows
-#         staring_angles_old = staring_angles
-#         ending_angles_old = ending_angles
-#         print('已发送选择的行数角度数')
-
 def send_cycle_command_to_radar(cycle):
     global radar
-    # rc, mid = send_command.publish_topic("/k1018dTtisV/cmdup/user/cmdup", bytearray(list(map(int, cycle))))
-    # rc, mid = send_command.publish_topic("/k1018dTtisV/cmdup/user/cmdup", bytearray.fromhex(str.encode(cycle).hex()))
-    # print(cycle)
-    # print(str(cycle))
     radar.send(bytearray.fromhex(cycle))
-    # rc, mid = send_command.publish_topic("/k1trkOHGXK4/cmdup/user/cmdup", bytearray.fromhex(cycle))
     print('发送成功', flush=True)
 
 
@@ -694,23 +645,12 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
                         print("缓冲区已满，丢弃数据", flush=True)
                         continue
                     buf_data.extend(data)
-                    # print("L", len(data), flush=True)
-
-                    # print("from {0}:".format(addr), data.decode('utf-8'))
-                    # print("L", len(data), flush=True)
-                    # buf_data.extend(data)
-                    # conn.send("Yes sir!".encode())
                 else:
                     break
             except Exception:
                 break
         conn.close()
         connect_state = 0
-        # else:
-        # print('没有接收到口令',flush=True)
-        # conn.send("commend error".encode())
-        # conn.close()
-        # connect_state = 0
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -766,11 +706,6 @@ class ServerThread5300:  # 用于启动tcp/ip服务端来接收雷达数据，�
                 break
         conn.close()
         connect_state5300 = 0
-        # else:
-        # print('没有接收到口令',flush=True)
-        # conn.send("commend error".encode())
-        # conn.close()
-        # connect_state = 0
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -832,11 +767,6 @@ class ServerThread5400:  # 用于启动tcp/ip服务端来接收雷达数据，�
                 break
         conn.close()
         connect_state5400 = 0
-        # else:
-        # print('没有接收到口令',flush=True)
-        # conn.send("commend error".encode())
-        # conn.close()
-        # connect_state = 0
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -978,12 +908,6 @@ def watchdog():
                 threads["up_data_thread"] = threading.Thread(target=up_data_thread, daemon=True)
                 threads["up_data_thread"].start()
 
-            # # 检查连接线程（即 connect_sever）
-            # if "connect_sever_thread" in threads and not threads["connect_sever_thread"].is_alive():
-            #     print("[看门狗] connect_sever 线程已停止，正在重启...", flush=True)
-            #     threads["connect_sever_thread"] = threading.Thread(target=connect_sever, daemon=True)
-            #     threads["connect_sever_thread"].start()
-
         # 异步检查 Flask API
         threading.Thread(target=check_flask_api, daemon=True).start()
 
@@ -999,33 +923,6 @@ def check_flask_api():
     except requests.RequestException:
         print("[看门狗] 无法访问 Flask API", flush=True)
 
-
-# if __name__ == '__main__':
-
-#     server = ServerThread('', 5200, 5)
-#     tcp_ip_server = threading.Thread(target=server.server_start)
-#     tcp_ip_server.daemon = True
-#     tcp_ip_server.start()  # 启动tcp/ip服务端线程
-#     print('tcp/ip已启动')
-
-#     # client = threading.Thread(target=connect_sever())
-#     # client.daemon = True
-#     # client.start()
-#     # print('客户端已启动')
-
-#     up_data_martix = threading.Thread(target=run_up_data_thread)
-#     up_data_martix.daemon = True
-#     up_data_martix.start()  # 启动矩阵处理线程
-#     print('矩阵处理已启动')
-
-#     timeee = threading.Thread(target=run_time_thread)
-#     timeee.daemon = True
-#     timeee.start()  # 启动矩阵处理线程
-#     print('时间已启动')
-
-#     app1.run(host='0.0.0.0', port=5001)
-#     # server_thread = threading.Thread(target=start_server)  # web线程
-#     # server_thread.start()  #启动web线程
 if __name__ == '__main__':
     with threads_lock:
         # 启动 TCP/IP 服务器线程
@@ -1046,11 +943,6 @@ if __name__ == '__main__':
         tcp_ip_server_5400.start()  # 启动tcp/ip服务端线程
         print('5400tcp/ip已启动')
 
-        # # 启动连接服务器线程
-        # threads["connect_sever_thread"] = threading.Thread(target=connect_sever, daemon=True)
-        # threads["connect_sever_thread"].start()
-        # print("连接服务器线程已启动")
-
         # 启动矩阵处理线程
         threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
         threads["up_data_matrix"].start()
@@ -1070,10 +962,6 @@ if __name__ == '__main__':
         threads["periodic_upload"].start()
         print("定时数据库上传线程已启动")
 
-        # threads["periodic_upload2"] = threading.Thread(target=periodic_db_upload2, daemon=True)
-        # threads["periodic_upload2"].start()
-        # print("定时数据库2上传线程已启动")
-
         # 启动看门狗线程
         threads["watchdog"] = threading.Thread(target=watchdog, daemon=True)
         threads["watchdog"].start()
@@ -1082,5 +970,3 @@ if __name__ == '__main__':
     # 启动 Flask，threaded=True 让其不会阻塞主线程
     app1.run(host='0.0.0.0', port=5001, threaded=True)
 
-    # server_thread = threading.Thread(target=start_server)  # web线程
-    # server_thread.start()  #启动web线程
