@@ -1,0 +1,2790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>雷达数据平台</title>
+    <link rel="icon" type="image/png" href="网标.png">
+    
+    <script src="/static/plotly-latest.min.js"></script>
+    <script src="/static/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    
+    <style>
+       body {
+            background-image: url('../static/bg01.png'); /* 替换为你的图片链接 */
+            width: 100%;
+            height: 100%;
+            opacity: 2; 
+            
+         
+            
+        }
+        .container{
+            position: relative;
+            width: 100%;
+            height: 75px;
+            background-image: url('../static/head.gif');
+            background-size: 50% 290px; /* 根据需要设置图像大小 */
+            
+            
+            background-position: center; /* 背景图像居中显示 */
+            background-repeat: no-repeat; /* 不重复背景图像 */
+            font-family: Arial, sans-serif; /* 设置字体 */
+            font-size: 20px;                /* 设置字体大小 */
+            font-weight: bold;              /* 设置字体粗细 */
+           
+            color: rgba(14,253,255,0.5);                 
+            line-height: 0.7;               /* 设置行高 */
+            text-align: center;             /* 设置文本对齐方式 */
+            /* color: rgb(71, 142, 236); 链接颜色 */
+        }
+        .button-container {
+            position: absolute; /* 绝对定位 */
+            bottom: 0; /* 距离底部的距离为0 */
+            left: 0; /* 距离左侧的距离为0 */
+            right: 0; /* 距离右侧的距离为0 */
+            text-align: center; /* 按钮居中 */
+            padding: 10px; /* 为按钮区域添加内边距 */
+            border-image-slice: 51 38 20 132;
+            box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+            
+        }
+        button {
+            padding: 9px 20px; /* 按钮内边距 */
+            font-size: 13px; /* 按钮字体大小 */
+            margin: 0 10px; /* 按钮之间的间距 */
+            cursor: pointer; /* 鼠标悬停时显示手形光标 */
+            border: none; /* 去掉边框 */
+            border-radius: 2px; /* 圆角边框 */
+            background: rgba(14,253,255,0.5); /* 渐变背景 */
+            color: white; /* 字体颜色 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+            transition: transform 0.2s, box-shadow 0.2s; /* 添加过渡效果 */
+        }
+        button:hover {
+            transform: translateY(-2px); /* 悬停时上移效果 */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* 悬停时增加阴影 */
+        }
+        button:active {
+            transform: translateY(0); /* 按钮按下时恢复 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 按钮按下时阴影恢复 */
+        }
+        .navbar {
+        display: flex;
+        justify-content: space-between;   /* 子项自动分布 */
+        align-items: center;              /* 垂直居中 */
+        gap: 40px;                        /* 子盒子之间的间距 */
+        margin: 10px;
+        padding: 0 20px;                  /* 可选：防止贴边 */
+        
+        }
+
+        .navbar > div {
+        position: relative;
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        border: 0.1px solid rgba(14,253,255,0.5);
+        color: white;                    /* 可选字体色 */
+        
+        }
+        
+        
+        
+        .navbar-1:hover{
+            background-color: rgba(21, 233, 166, 0.2); /* 悬停时背景色变化 */
+            transform: scale(1.05); /* 悬停时放大效果 */
+        }
+        .navbar-2:hover{
+            background-color: rgba(21, 233, 166, 0.2); /* 悬停时背景色变化 */
+            transform: scale(1.05); /* 悬停时放大效果 */
+            
+        }
+        .navbar-3:hover{
+            background-color: rgba(21, 233, 166, 0.2); /* 悬停时背景色变化 */
+            transform: scale(1.05); /* 悬停时放大效果 */
+            
+        }
+        .navbar-4:hover{
+            background-color: rgba(21, 233, 166, 0.2); /* 悬停时背景色变化 */
+            transform: scale(1.05); /* 悬停时放大效果 */
+        }
+        .navbar-5:hover{
+            background-color: rgba(21, 233, 166, 0.2); /* 悬停时背景色变化 */
+            transform: scale(1.05); /* 悬停时放大效果 */
+        }
+        .navbar-6:hover{
+            background-color: rgba(21, 233, 166, 0.2); /* 悬停时背景色变化 */
+            transform: scale(1.05); /* 悬停时放大效果 */
+        }
+
+
+
+
+
+        .navbar a {
+            
+            color: #e78a0f; /* 链接颜色 */
+            text-decoration: none; /* 去除下划线 */
+            padding: 14px 25px; /* 内边距 */
+            border-radius: 5px; /* 圆角边框 */
+            transition: background-color 0.3s, transform 0.2s; /* 背景色和变换过渡效果 */
+            margin: 0 10px; /* 链接之间的间隔 */
+            /* color: #bfddef;  */
+        }
+        
+        
+        .border_bg_leftTop{
+            position:absolute;
+            left:-3px;
+            top:-12px;
+            width:97px;
+            height:10px;
+            display:block;
+            background-image: url('../static/title_left_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_leftTop-5{
+            position:absolute;
+            left:-3px;
+            top:-20px;
+            width:171px;
+            height:22px;
+            display:block;
+            background-image: url('../static/title_left_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_leftTop-6{
+            position:absolute;
+            left:-3px;
+            top:-20px;
+            width:171px;
+            height:22px;
+            display:block;
+            background-image: url('../static/title_left_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_leftTop-7{
+            position:absolute;
+            left:-1px;
+            top:-13px;
+            width:100px;
+            height:13px;
+            display:block;
+            background-image: url('../static/title_left_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_rightTop{
+            position:absolute;
+            right:-0.01rem;
+            top:-0.01rem;
+            width:0.1rem;
+            height:0.1rem;
+            display:block;
+            background:url(../images/border_bg.jpg) no-repeat;
+            background-size:cover;
+        }
+        .border_bg_leftBottom{
+            position:absolute;
+            left:-0.008rem;
+            bottom:-0.008rem;
+            width:0.1rem;
+            height:0.1rem;
+            display:block;
+            background:url(../images/border_bg.jpg) no-repeat;
+            background-size:cover;
+        }
+
+
+        .border_bg_rightBottom{
+            position:absolute;
+            left:173px;
+            top:12px;
+            width:33px;
+            height:33px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+
+        .border_bg_rightBottom-1{
+            position:absolute;
+            left:126px;
+            top:12px;
+            width:33px;
+            height:33px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_rightBottom-2{
+            position:absolute;
+            left:157px;
+            top:12px;
+            width:33px;
+            height:33px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_rightBottom-3{
+            position:absolute;
+            left:205px;
+            top:12px;
+            width:33px;
+            height:33px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_rightBottom-4{
+            position:absolute;
+            left:125px;
+            top:12px;
+            width:33px;
+            height:33px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_rightBottom-5{
+            position:absolute;
+            left:550px;
+            top:249px;
+            width:90px;
+            height:90px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_rightBottom-6{
+            position:absolute;
+            left:730px;
+            top:430px;
+            width:110px;
+            height:110px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+        .border_bg_rightBottom-7{
+            position:absolute;
+            left:730px;
+            top:230px;
+            width:110px;
+            height:110px;
+            display:block;
+            background-image: url('../static/title_right_bg.png');
+            
+            background-size:cover;
+        }
+
+        .file-input {
+            display: none; /* 隐藏文件输入 */
+        }
+        .file-label {
+            
+            color:  rgb(71, 142, 236);
+            padding: 14px 25px;
+            border-radius: 5px;
+            cursor: pointer; /* 鼠标悬停时显示手形光标 */
+            transition: background-color 0.3s; /* 背景色变化过渡效果 */
+        }
+        .file-label:hover {
+            background-color:rgba(205, 231, 233, 0.2); /* 悬停时背景色变化 */
+        }
+        .file-input2 {
+            display: none; /* 隐藏文件输入 */
+        }
+        .file-label2 {
+           
+            color:  rgb(71, 142, 236);
+            padding: 14px 25px;
+            border-radius: 5px;
+            cursor: pointer; /* 鼠标悬停时显示手形光标 */
+            transition: background-color 0.3s; /* 背景色变化过渡效果 */
+        }
+        .file-label2:hover {
+            background-color:rgba(205, 231, 233, 0.2); /* 悬停时背景色变化 */
+        }
+        .file-input3 {
+            display: none; /* 隐藏文件输入 */
+        }
+        .file-label3 {
+            
+            color:  rgb(71, 142, 236);
+            padding: 14px 25px;
+            border-radius: 5px;
+            cursor: pointer; /* 鼠标悬停时显示手形光标 */
+            transition: background-color 0.3s; /* 背景色变化过渡效果 */
+        }
+        .file-label3:hover {
+            background-color:rgba(205, 231, 233, 0.2); /* 悬停时背景色变化 */
+        }
+        .popup {
+            width: 600px;
+            height: 300px;
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 50%; /* 垂直居中 */
+            left: 50%; /* 水平居中 */
+            transform: translate(-50%, -50%); /* 居中调整 */
+            /* background-color: rgba(15, 56, 79, 0.995); */
+            border-radius: 10px; /* 圆角边框 */
+            /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); */
+            padding: 20px; /* 内边距 */
+            z-index: 1000; /* 确保在最上层 */
+            text-align: center; /* 文本居中 */
+            border:0.1px solid rgba(14,253,255,0.5);
+        }
+        .popup2 {
+            width: 800px;
+            height: 500px;
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 58%; /* 垂直居中 */
+            left: 50%; /* 水平居中 */
+            transform: translate(-50%, -50%); /* 居中调整 */
+            
+            border-radius: 10px; /* 圆角边框 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* 阴影效果 */
+            padding: 20px; /* 内边距 */
+            z-index: 1000; /* 确保在最上层 */
+            text-align: center; /* 文本居中 */
+            border:0.1px solid rgba(14,253,255,0.5);
+        }
+        .popup3 {
+            width: 20%;
+            height: 62%;
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 58%; /* 垂直居中 */
+            left: 50%; /* 水平居中 */
+            transform: translate(-50%, -50%); /* 居中调整 */
+            
+            border-radius: 10px; /* 圆角边框 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* 阴影效果 */
+            padding: 20px; /* 内边距 */
+            z-index: 1000; /* 确保在最上层 */
+            text-align: center; /* 文本居中 */
+            border:0.1px solid rgba(14,253,255,0.5);
+        }
+        .popup4 {
+            width: 800px;
+            height: 300px;
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 58%; /* 垂直居中 */
+            left: 50%; /* 水平居中 */
+            transform: translate(-50%, -50%); /* 居中调整 */
+            
+            border-radius: 10px; /* 圆角边框 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* 阴影效果 */
+            padding: 20px; /* 内边距 */
+            z-index: 1000; /* 确保在最上层 */
+            text-align: center; /* 文本居中 */
+            border:0.1px solid rgba(14,253,255,0.5);
+        }
+        .popup h3{
+            color:rgba(14,253,255,0.5);
+        }
+        .popup4 h3{
+            color:rgba(14,253,255,0.5);
+        }
+        .popup2 h3{
+            color:rgba(14,253,255,0.5);
+            margin-top: 30px;
+        }
+        .popup2.hreder{
+            
+            padding: 10px;
+        }
+        .popup .radio-group{
+            color:rgba(14,253,255,0.5);
+        }
+        .popup .popup-buttons{
+            position: absolute; /* 绝对定位 */
+            bottom: 0; /* 距离底部的距离为0 */
+            left: 0; /* 距离左侧的距离为0 */
+            right: 0; /* 距离右侧的距离为0 */
+            text-align: center; /* 按钮居中 */
+            padding: 40px; /* 为按钮区域添加内边距 */
+            
+        }
+        .popup4 .popup-buttons4{
+            position: absolute; /* 绝对定位 */
+            bottom: 0; /* 距离底部的距离为0 */
+            left: 0; /* 距离左侧的距离为0 */
+            right: 0; /* 距离右侧的距离为0 */
+            text-align: center; /* 按钮居中 */
+            padding: 40px; /* 为按钮区域添加内边距 */
+            
+        }
+        .popup2 .popup-buttons2{
+            position: absolute; /* 绝对定位 */
+            bottom: 0; /* 距离底部的距离为0 */
+            left: 0; /* 距离左侧的距离为0 */
+            right: 0; /* 距离右侧的距离为0 */
+            text-align: center; /* 按钮居中 */
+            padding: 10px; /* 为按钮区域添加内边距 */
+            
+        }
+        .popup4 .popup-buttons4{
+            position: absolute; /* 绝对定位 */
+            bottom: 0; /* 距离底部的距离为0 */
+            left: 0; /* 距离左侧的距离为0 */
+            right: 0; /* 距离右侧的距离为0 */
+            text-align: center; /* 按钮居中 */
+            padding: 10px; /* 为按钮区域添加内边距 */
+            
+        }
+        .popup3 .popup-buttons3 span{
+            width: 50%;
+        }
+        .popup3 .popup-buttons3{
+            width: 103%;
+            position: fixed; /* 绝对定位 */
+            bottom: 15px; /* 距离底部的距离为0 */
+            left: -4px; /* 距离左侧的距离为0 */
+            right: 0; /* 距离右侧的距离为0 */
+            text-align: center; /* 按钮居中 */
+            padding: 0; /* 为按钮区域添加内边距 */
+            
+        }
+        .overlay {
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 0;
+            left: 0;
+            width: 100%; /* 全屏宽度 */
+            height: 100%; /* 全屏高度 */
+            background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+            z-index: 999; /* 确保在弹出框下面 */
+        }
+        .overlay2 {
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 0;
+            left: 0;
+            width: 100%; /* 全屏宽度 */
+            height: 100%; /* 全屏高度 */
+            background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+            z-index: 999; /* 确保在弹出框下面 */
+        }
+        .overlay3 {
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 0;
+            left: 0;
+            width: 100%; /* 全屏宽度 */
+            height: 100%; /* 全屏高度 */
+            background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+            z-index: 999; /* 确保在弹出框下面 */
+        }
+        .overlay4 {
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 0;
+            left: 0;
+            width: 100%; /* 全屏宽度 */
+            height: 100%; /* 全屏高度 */
+            background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+            z-index: 999; /* 确保在弹出框下面 */
+        }
+        input[type="text"] {
+            width: 60%; /* 输入框宽度 */
+            padding: 10px; /* 内边距 */
+            margin: 10px 0; /* 上下间距 */
+            border: 1px solid rgba(14,253,255,0.5); /* 边框 */
+            border-radius: 5px; /* 圆角 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* 添加阴影效果 */
+            text-align: center;
+        }
+        .message-con{
+            width: 90%;
+            height: 50% ;
+        }
+        .message-con {
+        margin: 0 auto;
+        display: flex;
+        height: 400px;
+        width: 750px;
+        
+        border-radius: 10px; /* 圆角边框 */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+        
+        padding: 20px; /* 内边距 */
+        overflow-y: auto; /* 如果内容超出，显示滚动条 */
+    }
+
+   .receive-con {
+        flex: 1;
+        padding-right: 150px; /* 右内边距，防止与其他内容重叠 */
+        
+    }
+
+    .receive-con h5 {
+        color: rgba(14,253,255,0.5); /* 字体颜色 */
+        margin-top: 0px; /* 标题下方的间距 */
+    }
+    .send-con h5 {
+        color: rgba(14,253,255,0.5); /* 字体颜色 */
+        margin-top: 0px; /* 标题下方的间距 */
+    }
+
+    .receive-con div {
+        margin-bottom: 15px; /* 每个项之间的间距 */
+        display: flex; /* 使用Flexbox以便用于内容的排列 */
+        justify-content: space-between; /* 两端对齐 */
+        align-items: center; /* 垂直居中 */
+    }
+
+    .receive-con span {
+        font-size: 16px; /* 字体大小 */
+        color: rgba(14,253,255,0.5); /* 字体颜色 */
+    }
+
+    .receive-con input[type="text"] {
+        width: 70%; /* 输入框宽度 */
+        padding: 8px; /* 内边距 */
+        
+        border-color: #0fb8e7;
+        border-radius: 5px; /* 圆角 */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+    }
+    .send-con div {
+        margin-bottom: 15px; /* 每个项之间的间距 */
+        display: flex; /* 使用Flexbox以便用于内容的排列 */
+        justify-content: space-between; /* 两端对齐 */
+        align-items: center; /* 垂直居中 */
+    }
+
+    .send-con span {
+        font-size: 16px; /* 字体大小 */
+        color: rgba(14,253,255,0.5); /* 字体颜色 */
+    }
+
+    .send-con input[type="text"] {
+        width: 70%; /* 输入框宽度 */
+        padding: 8px; /* 内边距 */
+        border: 1px solid #ccc; /* 边框 */
+        border-radius: 5px; /* 圆角 */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
+    }
+    .files {
+        display: flex; /* 使用弹性盒子布局 */
+        align-items: center; /* 垂直居中对齐 */
+        gap: 0; /* 设置两个label间的水平间隔 */
+    }
+    
+    .files label {
+        margin: 0; /* 去掉默认的margin */
+    }
+    
+    .row {
+        display: flex; /* 使用 flexbox 布局 */
+        align-items: center; /* 垂直居中对齐 */
+        margin-bottom: -5px;
+        
+    }
+    .section1 .row label {
+        flex: 3; /* 标签占据剩余空间 */
+        margin-right: 5px; /* 标签与输入框之间的间距 */
+        color: rgba(14,253,255,0.5);
+        height: 5px;
+        font-size: 15px;
+        text-align: left;
+        line-height: 0.1;
+    }
+    .section1 .row input {
+        flex: 1; /* 输入框占据两倍空间 */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        transition: border-color 0.3s;
+        height: 5px;
+        text-align: center;
+    }
+    .section1 .row input:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .section2 .row label {
+        flex: 3; /* 标签占据剩余空间 */
+        margin-right: 5px; /* 标签与输入框之间的间距 */
+        color: rgba(14,253,255,0.5);
+        height: 5px;
+        font-size: 15px;
+        text-align: left;
+        line-height: 0.1;
+    }
+    .section2 .row input {
+        flex: 1; /* 输入框占据两倍空间 */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        transition: border-color 0.3s;
+        height: 5px;
+        text-align: center;
+    }
+    .section2 .row input:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+    .popup3-navbar a {
+        color: rgb(71, 142, 236); /* 链接颜色 */
+            text-decoration: none; /* 去除下划线 */
+            padding: 5px 5px; /* 内边距 */
+            border-radius: 5px; /* 圆角边框 */
+            transition: background-color 0.3s, transform 0.2s; /* 背景色和变换过渡效果 */
+            margin: 0 2px; /* 链接之间的间隔 */
+    }
+    .popup3-navbar a:hover {
+            background-color: rgba(21, 233, 166, 0.2); /* 悬停时背景色变化 */
+            transform: scale(1.05); /* 悬停时放大效果 */     
+    }
+    .popup3-navbar a.active {
+            background-color: rgba(21, 233, 166, 0.2); /* 设置访问过的链接颜色 */
+        }
+    .popup4 .row label {
+        flex: 3; /* 标签占据剩余空间 */
+        margin-right: 1px; /* 标签与输入框之间的间距 */
+        color: white;
+        height: 5px;
+        font-size: 15px;
+        text-align: left;
+        line-height: 0.1;
+    }
+    .popup4 .row input {
+        flex: 1; /* 输入框占据两倍空间 */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        transition: border-color 0.3s;
+        height: 5px;
+        text-align: center;
+    }
+    .popup4 .row input:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+    .center-box {
+            /* background-image: url('../static/hedao2.jpg'); */
+             
+            background-color: rgba(255, 255, 255, 0); 
+            display: flex;
+            width: 65%; /* 盒子的宽度 */
+            height: 68%; /* 盒子的高度 */
+            background-size: cover; /* 或使用 contain，根据需求 */
+            background-position: center; /* 背景位置居中 */
+            background-repeat: no-repeat; /* 不重复 */
+            border: 1px solid rgba(14,253,255,0.5); /* 边框 */
+            border-radius: 10px; /* 圆角 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+            position: fixed; /* 固定定位 */
+            bottom: 8%; /* 距离视口顶部50% */
+
+            left: 17%;
+            opacity: 1;
+            align-items: center; /* 水平居中内容 */
+            text-align: center; /* 文字居中 */
+            overflow: hidden;
+    }
+    #background {
+            position: absolute;
+            top: 47%;
+            left: 57%;
+            width: 150%;
+            height: 150%;
+            
+            background-size: cover;
+            transform: translate(-50%, -50%); /* 使背景居中 */
+            transition: transform 0.5s; /* 添加过渡效果 */
+    }
+
+        .resizable-image {
+            width: 20px; /* 小盒子的宽度 */
+            height: 20px; /* 小盒子的高度 */
+            background-image: url('../static/tubiao.jpg'); /* 替换为你的图片链接 */
+            border-radius: 5px; /* 小盒子的圆角 */
+            position: absolute; /* 使用绝对定位 */
+            bottom: 0; /* 距离父盒子底部10px */
+            left: 50%; /* 水平居中 */
+            transform: translateX(-50%); /* 使小盒子真正居中 */
+        }
+        .resizable-image img {
+            width: 100%; /* 图片宽度 100% 适应小盒子 */
+            height: auto; /* 高度自动调整以保持比例 */
+            display: block; /* 使图片充满盒子，并消除底部空白 */
+        }
+        #polar-plot {
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        #tooltip{
+            position: absolute; 
+            top: 50px;    /* 距离定位父元素的顶部20px */
+            right: 50px;   /* 距离定位父元素的左边50px */
+            display: none; 
+            background: rgba(21, 233, 166, 0.2); 
+            color: white; 
+            padding: 5px; 
+            border-radius: 5px;
+            display: none;
+        }
+        
+        
+    .tubiao{
+            position: absolute; 
+            width: 15px;
+            height: 15px;
+            bottom: 0%;    /* 距离定位父元素的顶部20px */
+            left: 50%;   /* 距离定位父元素的左边50px */
+            background-image: url('../static/tubiao.jpg'); 
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            
+    }
+    #myCanvas {
+    margin-bottom: 40px; /* 下边距 */
+    position: relative; /* 让内容层保持在原位 */
+    z-index: 1; /* 确保内容层在背景层之上 */
+    display: block; /* 设置为块级元素 */
+    margin: 0 auto; /* 上下为0，左右自动分配空间 */
+   
+    }
+    
+    #output {   
+    position: absolute;
+    width: 200px;
+    height: 25px;
+    color: white;
+    left: 80px;
+    top: 10px;
+    
+    }
+    #output2 {   
+    position: absolute;
+    width: 200px;
+    height: 25px;
+    color: white;
+    left: 80px;
+    top: 50px;
+    display: none;
+    }
+    #k1{
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    color: white;
+    
+    left: 0px;
+    top: 0px;
+    
+    }
+    #k2{
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    color: white;
+    
+    left: 0px;
+    top: 260px;  
+    }
+    
+    #k11{
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    color: white;
+    font-size: 10px;
+    left: 14%;
+    top: 42%;
+    
+    }
+    #k22{
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    color: white;
+    font-size: 10px;
+    left: 25%;
+    top: 65%;  
+    
+    }
+    
+    #k33{
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    color: white;
+    font-size: 10px;
+    left: 34%;
+    top: 85%;  
+    }
+    #myCanvas {
+    display: block; /* 设置为块级元素 */
+    margin: 0 auto; /* 上下为0，左右自动分配空间 */
+   }
+   .time-display {
+        position: absolute; /* 绝对定位 */
+        top: 10px; /* 距离顶部的距离 */
+        left: 150px; /* 距离左侧的距离 */
+        font-size: 15px; /* 字体大小 */
+        color: rgba(14,253,255,0.5); /* 字体颜色 */
+            
+        padding: 5px; /* 内边距 */
+        border-radius: 5px; /* 圆角边框 */
+    }
+    .right-box1{
+        position: absolute;
+        right: 5%;
+        top: 48%;
+        width: 2%;
+        height: 3%;
+        
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+    }
+    .right-box2{
+        position: absolute;
+        right: 5%;
+        top: 60%;
+        width: 2%;
+        height: 3%;
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+    }
+    .right-box3{
+        position: absolute;
+        right: 5%;
+        top: 36%;
+        width: 2%;
+        height: 3%;
+        
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+    }
+    .right-box4{
+        position: absolute;
+        right: 5%;
+        top: 72%;
+        width: 2%;
+        height: 3%;
+        
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+    }
+    .right-box5{
+        position: absolute;
+        right: 5%;
+        top: 24%;
+        width: 2%;
+        height: 3%;
+        
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+    }
+    .right-box6{
+        position: absolute;
+        right: 5%;
+        top: 84%;
+        width: 2%;
+        height: 3%;
+        
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+    }
+    #right-box1-1{
+        position: relative;
+        top: 0px;
+        left: -36px;
+        line-height: 1px;
+        font-size: 30px;
+        color: #35ed44 ;
+        height: 30px;
+        width: 0px;
+        text-align: center;
+    }
+    #right-box2-1{
+        position: relative;
+        top: 0px;
+        left: -36px;
+        line-height: 1px;
+        font-size: 30px;
+        color:  #e78a0f ;
+        height: 30px;
+        width: 0px;
+        text-align: center;
+    }
+    #right-box3-1{
+        position: relative;
+        top: 0px;
+        left: -36px;
+        line-height: 1px;
+        font-size: 30px;
+        color:  #d9e70f;
+        height: 30px;
+        width: 0px;
+        text-align: center;
+    }
+    #right-box4-1{
+        position: relative;
+        top: 0px;
+        left: -36px;
+        line-height: 1px;
+        font-size: 30px;
+        color:  #e70fd5;
+        height: 30px;
+        width: 0px;
+        text-align: center;
+    }
+    #right-box5-1{
+        position: relative;
+        top: 0px;
+        left: -36px;
+        line-height: 1px;
+        font-size: 30px;
+        color:  #e70f0f;
+        height: 30px;
+        width: 0px;
+        text-align: center;
+    }
+    #right-box6-1{
+        position: relative;
+        top: 0px;
+        left: -36px;
+        line-height: 1px;
+        font-size: 30px;
+        color:  #09ddf0;
+        height: 30px;
+        width: 0px;
+        text-align: center;
+    }
+    .right-box1-2{
+        width: 100px;
+        position: relative;
+        top: -63px;
+        left: -39px;
+        line-height: 1px;
+        font-size: 12px;
+        color:rgba(14,253,255,0.5);
+        
+    }
+    .right-box2-2{
+        width: 100px;
+        position: relative;
+        top: -63px;
+        left: -39px;
+        line-height: 1px;
+        font-size: 12px;
+        color:rgba(14,253,255,0.5);
+        
+    }
+    .right-box3-2{
+        width: 100px;
+        position: relative;
+        top: -63px;
+        left: -39px;
+        line-height: 1px;
+        font-size: 12px;
+        color:rgba(14,253,255,0.5);
+        
+    }
+    .right-box4-2{
+        width: 100px;
+        position: relative;
+        top: -63px;
+        left: -39px;
+        line-height: 1px;
+        font-size: 12px;
+        color:rgba(14,253,255,0.5);
+        
+    }
+    .right-box5-2{
+        width: 100px;
+        position: relative;
+        top: -63px;
+        left: -39px;
+        line-height: 1px;
+        font-size: 12px;
+        color:rgba(14,253,255,0.5);
+        
+    }
+    .right-box6-2{
+        width: 100px;
+        position: relative;
+        top: -63px;
+        left: -39px;
+        line-height: 1px;
+        font-size: 12px;
+        color:rgba(14,253,255,0.5);
+        
+    }
+    .icon-dot:before {
+    content: "\e900";
+    }
+    .right-box1-2{
+        
+        margin-top: 65px;
+        margin-left: -4px;
+    }
+    .right-box2-2{
+        
+        margin-top: 65px;
+        margin-left: -4px;
+    }
+    .right-box3-2{
+        
+        margin-top: 65px;
+        margin-left: -4px;
+    }
+    .right-box4-2{
+        
+        margin-top: 65px;
+        margin-left: -4px;
+    }
+    .right-box5-2{
+        
+        margin-top: 65px;
+        margin-left: -4px;
+    }
+    .right-box6-2{
+        
+        margin-top: 65px;
+        margin-left: -4px;
+    }
+
+    .left-box{
+        position: absolute;
+        left: 0.8%;
+        top: 38%;
+        width: 9%;
+        height: 48%; 
+        
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+        
+    }
+    
+    .left-box2{
+        position: absolute;
+        left: 0.8%;
+        top: 24%;
+        width: 9%;
+        height: 6%; 
+        
+        border: 15px solid transparent;
+        border-width: 33px 28px 15px 88px;
+        border-image-source: url('../static/border.png');
+        
+        border-image-slice: 51 38 20 132;
+        
+    }
+    .inner{
+        position: absolute;
+        top: -30px;
+        left: -86px;
+        right: -26px;
+        bottom: -12px;
+        display: flex;
+        flex-direction: column;
+        
+    }
+
+
+.monitor .tabs {
+  padding: 18px 18px;
+  margin-bottom: 9px;
+  font-size: 17px;
+ line-height: 15px;
+  display: flex;
+}
+.monitor .tabs a {
+  color: #00f2f1;
+  font-size: 14px;
+  padding: 3px 12px;
+  text-decoration: none; /* 去除下划线 */
+}
+.monitor .tabs a:first-child {
+  padding-left: 0;
+  border-right: 1px solid #00f2f1;
+}
+
+
+.monitor .content {
+  flex: 1;
+  position: relative;
+  display: none;
+}
+.monitor .head {
+  display: flex;
+  justify-content: space-between;
+  line-height: 2.05;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1px 1px;
+  color: #68d8fe;
+  font-size: 13px;
+  
+}
+
+.monitor .marquee-view {
+  position: absolute;
+  top: 29.5px;
+  bottom: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.monitor .row {
+  display: flex;
+  justify-content: space-between;
+  line-height: 4.3;
+  font-size: 11.2px;
+  color: #61a8ff;
+  padding: 0.15px 0.45px;
+}
+.monitor .row .icon-dot {
+  position: absolute;
+  left: 0.2px;
+  opacity: 0;
+}
+.monitor .row:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #68d8fe;
+}
+.monitor .row:hover .icon-dot {
+  opacity: 1;
+}
+.monitor .col:first-child {
+  width: 160px;
+  text-align: center;
+}
+/* .monitor .col:nth-child(2) {
+  width: 2.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+} */
+.monitor .col:nth-child(2) {
+  width: 110px;
+  text-align: center;
+}
+/* 通过CSS3动画滚动marquee */
+.marquee-view .marquee {
+  animation: move 15s linear infinite;
+}
+@keyframes move {
+  0% {
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+/* 3.鼠标经过marquee 就停止动画 */
+.marquee-view .marquee:hover {
+  animation-play-state: paused;
+}
+    .value-box {
+      font-size: 60px;
+      padding: 30px;
+      border: 4px solid #ccc;
+      border-radius: 15px;
+      display: inline-block;
+      background: white;
+      transition: all 0.3s;
+    }
+
+    .alert-level-1 {
+      border-color: orange;
+      color: orange;
+      animation: flash1 1s infinite;
+    }
+
+    .alert-level-2 {
+      border-color: red;
+      color: white;
+      background-color: red;
+      animation: flash2 0.8s infinite;
+    }
+
+    @keyframes flash1 {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes flash2 {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+
+    /* 报警条动画效果 */
+@keyframes bannerFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* 闪烁的警报条 */
+.alarm-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 50px;
+  background: linear-gradient(90deg, #ff1e1e, #ff4e4e, #ff1e1e);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px black;
+  z-index: 9999;
+  animation: bannerFlash 1s infinite;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+  text-align:center;
+}
+
+/* 警报图标动画（可选） */
+.alarm-banner::before {
+  content: '🚨';
+  margin-right: 10px;
+  font-size: 22px;
+  animation: sirenSpin 1.2s infinite ease-in-out;
+}
+
+@keyframes sirenSpin {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.2) rotate(10deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+
+    .mute-btn {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      background: rgba(255,255,255,0.8);
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .alert-level-2 {
+      border-color: red;
+      color: white;
+      background-color: red;
+      animation: flash2 0.8s infinite;
+    }
+    @keyframes flash2 {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+
+
+    </style>
+</head>
+<body>
+    
+    <div class="alarm-banner" id="alarmBanner" style="display: none;">⚠ 预警：雷达温度已超过阈值！请关闭雷达！</div>
+    
+    <!-- <div id="matrix-mean" style="position:absolute; background-color: white; color: black; padding: 5px; border-radius: 3px;width: 150px;height: 50px;"></div> -->
+    <div class="container"> 
+        <div class="time-display" id="timeDisplay">Loading time...</div>
+        <h2>毫米波雷达数据平台</h2>
+    </div>
+    
+    <!-- <div class="button-container">
+               <button onclick="alert('开始接受毫米波雷达发射的数据！')">接收数据</button>
+               <button onclick="restartRadar()">重启雷达</button>
+               <label class="file-label" for="file-upload" style="color: #bfddef;">配置文件</label> 
+        <input type="file" id="file-upload" class="file-input">  
+        <a href="#fangwei" onclick="showPopup4(event)">探测距离</a>
+    </div> -->
+    <div class="navbar">
+        <div class="navbar-1">
+            <a class="navbar-left"  href="#pa" onclick="showPopup3(event)" >内置参数</a>
+            <span class="border_bg_leftTop"></span>
+            <span class="border_bg_rightTop"></span>
+            <span class="border_bg_leftBottom"></span>
+            <!-- <span class="border_bg_rightBottom-1"></span> -->
+        </div>
+        
+        <div class="navbar-2">
+            <a href="#home" onclick="showPopup(event)">雷达参数配置</a>
+            <span class="border_bg_leftTop"></span>
+            <span class="border_bg_rightTop"></span>
+            <span class="border_bg_leftBottom"></span>
+            <!-- <span class="border_bg_rightBottom-2"></span> -->
+        </div>
+        
+        <div class="navbar-3">
+            <a href="#data" onclick="showPopup2(event)">前后端参数配置</a>
+            <span class="border_bg_leftTop"></span>
+            <span class="border_bg_rightTop"></span>
+            <span class="border_bg_leftBottom"></span>
+            <!-- <span class="border_bg_rightBottom"></span>  -->
+        </div>
+
+        <div class="navbar-5">
+            <a href="#RadarRiver" onclick="showPopup4(event)">雷达与河流参数配置</a>
+            <span class="border_bg_leftTop"></span>
+            <span class="border_bg_rightTop"></span>
+            <span class="border_bg_leftBottom"></span>
+            <!-- <span class="border_bg_rightBottom-3"></span>  -->
+        </div>
+        
+        <div class="navbar-6">
+            <a href="#RadarRiver" onclick="restart(event)">雷达复位</a>
+            <span class="border_bg_leftTop"></span>
+            <span class="border_bg_rightTop"></span>
+            <span class="border_bg_leftBottom"></span>
+            <!-- <span class="border_bg_rightBottom-3"></span>  -->
+        </div>
+        
+        
+        <div class="navbar-4">
+            <a class="navbar-right"  id="saveButton" href="#download" onclick="saveMatrixData()">数据下载</a>
+            <span class="border_bg_leftTop"></span>
+            <span class="border_bg_rightTop"></span>
+            <span class="border_bg_leftBottom"></span>
+            <!-- <span class="border_bg_rightBottom-4"></span> -->
+        </div>  
+    </div>
+
+    
+    <div class="left-box2" style="color: #68d8fe;">
+        
+        <div class="tabs1" style="color: #68d8fe;width: 200px;margin-left: -38px;margin-top: -13px;">
+            <span class="spa1"   style="border-right: 1px solid #00f2f1;padding-right: 30px;align-items: center;" >电池容量</span>
+            <span class="spa2" id="electricity" style="margin-left: 30px;align-items: center;padding-left: 1px;">0%</span>
+        </div>
+            
+        <div class="tabs2" style="color: #68d8fe;width: 200px;margin-left: -32px;margin-top: 11px;">
+            <span class="spa3"   style="align-items: center;border-right: 1px solid #00f2f1;padding-right: 40px;" >电压值</span>
+            <span class="spa4" id="voltage" style="margin-left: 33px;align-items: center;padding-left: -3px;">0v</span>
+        </div>
+
+        
+
+    </div>
+    
+    <div class="left-box panal monitor">
+        <div class="inner">
+            <div class="tabs">
+                <a href="javascript:;" class="active">FMCW参数</a>
+                
+              </div>
+            <div class="content" style="display: block;">
+                <div class="head">
+                    <span class="col">参数名</span>
+                    
+                    <span class="col">参数值</span>
+                </div>
+                <div class="marquee-view">
+                    <div class="marquee">
+                      <div class="row">
+                        <span class="col">起始频率(GHz)</span>
+                        
+                        <span class="col">77</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">采样频率(Ksps)</span>
+                        
+                        <span class="col">10000</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">采样点数</span>
+                        
+                        <span class="col">256</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">斜率(MHz/us)</span>
+                        
+                        <span class="col">10</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">采样时间(us)</span>
+                        
+                        <span class="col">24</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">带宽(MHz)</span>
+                        
+                        <span class="col">298.8</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">Chirp Num</span>
+                        
+                        <span class="col">64</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">脉冲重复时间(us)</span>
+                        
+                        <span class="col">1000</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">帧时间(ms)</span>
+                        
+                        <span class="col">1000</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">起始频率(GHz)</span>
+                        
+                        <span class="col">77</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">采样频率(Ksps)</span>
+                        
+                        <span class="col">10000</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">采样点数</span>
+                        
+                        <span class="col">256</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">斜率(MHz/us)</span>
+                        
+                        <span class="col">10</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">采样时间(us)</span>
+                        
+                        <span class="col">24</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">带宽(MHz)</span>
+                        
+                        <span class="col">298.8</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">Chirp Num</span>
+                        
+                        <span class="col">64</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">脉冲重复时间(us)</span>
+                        
+                        <span class="col">1000</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      <div class="row">
+                        <span class="col">帧时间(ms)</span>
+                        
+                        <span class="col">1000</span>
+                        <span class="icon-dot"></span>
+                      </div>
+                      
+                    </div>
+                </div>
+                
+
+            </div>
+            
+
+        </div>
+
+    </div>
+
+
+
+    <div class="right-box1 panal">
+        <div id="right-box1-1">            
+                0           
+        </div>        
+        <div class="right-box1-2">
+            <i class="icon-dot" style="color: #35ed44"></i>
+            探测距离/m
+        </div>
+    </div>
+
+    <div class="right-box2 panal">
+        <div id="right-box2-1">            
+            5       
+        </div>        
+        <div class="right-box2-2">
+            <i class="icon-dot" style="color: #e78a0f"></i>
+            雷达高度/m
+        </div>
+    </div>
+
+    <div class="right-box3 panal">
+        <div id="right-box3-1">            
+            0       
+        </div>        
+        <div class="right-box3-2">
+            <i class="icon-dot" style="color: #d9e70f"></i>
+            当前速度:m/s
+        </div>
+    </div>
+
+    <div class="right-box4 panal">
+        <div id="right-box4-1">            
+            45°
+        </div>        
+        <div class="right-box4-2">
+            <i class="icon-dot" style="color: #e70fd5"></i>
+            岸边夹角/度
+        </div>
+    </div>
+
+    <div class="right-box5 panal">
+        <div id="right-box5-1">            
+            0
+        </div>        
+        <div class="right-box5-2">
+            <i class="icon-dot" style="color: #e70f0f"></i>
+            平均速度:m/s
+        </div>
+    </div>
+    
+    <div class="right-box6 panal" id="right-box6">
+        <div id="right-box6-1">            
+            0
+        </div>        
+        <div class="right-box6-2">
+            <i class="icon-dot" style="color: #09ddf0"></i>
+            雷达温度/°C
+        </div>
+    </div>
+    <!-- 雷达结果显示框 -->
+   <div class="center-box" id="center-box">
+        <div id="background">
+
+        </div>
+        <div id="output" style="display: none;"> </div>
+        <div id="output2">0</div>
+        <div id="tooltip"></div>
+        
+        
+        <div id="k1"></div>
+        <div id="k2"></div>
+        
+
+        <div id="k11"></div>
+        <div id="k22"></div>
+        <div id="k33"></div>
+
+        
+        <canvas id="myCanvas" width="1100" height="590" ></canvas>
+        <div class="tubiao"></div>
+   </div>
+
+  
+  <!-- 雷达与系统参数 -->
+    <div class="overlay3" id="overlay3"></div>
+    <div class="popup3" id="popup3" >
+        <div style="color: rgba(14,253,255,0.5);height: 50px;">FMCW参数与系统参数如下所示</div>
+        
+        <div class="popup3-navbar">
+            <a href="#section1" onclick="showSection('section1', this)" style="color: rgba(14,253,255,0.5);">FMCW参数</a>
+            <a href="#section2" onclick="showSection('section2', this)" style="color: rgba(14,253,255,0.5);">系统参数</a>
+            
+        </div>
+    
+        <div class="section1"  id="section1">
+            <div class="row">
+                <label for="input1">起始频率(GHz)</label>
+                <input type="text" value="77">
+            </div>
+            <div class="row">
+                <label for="input2">采样频率(Ksps)</label>
+                <input type="text"value="10000">
+            </div>
+            <div class="row">
+                <label for="input3">采样点数</label>
+                <input type="text"value="256">
+            </div>
+            <div class="row">
+                <label for="input4">斜率(MHz/us)</label>
+                <input type="text"value="10">
+            </div> 
+            <div class="row">
+                <label for="input5">采样时间(us)</label>
+                <input type="text"value="24">
+            </div>
+            <div class="row">
+                <label for="input6">带宽(MHz)</label>
+                <input type="text"value="298.8">
+            </div>
+            <div class="row">
+                <label for="input7">Chirp Num</label>
+                <input type="text"value="64">
+            </div>
+            <div class="row">
+                <label for="input8">脉冲重复时间(us)</label>
+                <input type="text"value="1000">
+            </div> 
+            <div class="row">
+                <label for="input9">帧时间(ms)</label>
+                <input type="text"value="1000">
+            </div>
+        </div>
+       
+        <div class="section2" id="section2" style="display:none;">
+            <div class="row">
+                <label for="input1">最大距离(m)</label>
+                <input type="text" value="">
+            </div>
+            <div class="row">
+                <label for="input2">距离分辨率(m)</label>
+                <input type="text"value="">
+            </div>
+            <div class="row">
+                <label for="input3">最大速度(m/s)</label>
+                <input type="text"value="">
+            </div>
+            <div class="row">
+                <label for="input4">速度分辨率(m/s)</label>
+                <input type="text"value="">
+            </div> 
+            <div class="row">
+                <label for="input5">发射天线数量</label>
+                <input type="text"value="">
+            </div>
+            <div class="row">
+                <label for="input6">角度分辨率(度)</label>
+                <input type="text"value="">
+            </div>
+            <div class="row">
+                <label for="input7">接受天线数量</label>
+                <input type="text"value="">
+            </div>
+            <div class="row">
+                <label for="input8">温度(℃)</label>
+                <input type="text"value="28">
+            </div> 
+        </div>
+        
+    
+        <div class="popup-buttons3">
+            <span>
+                <button onclick="submitData3()">提交数据</button>
+            </span>
+            <span>
+                <button onclick="hidePopup3()">关闭</button> 
+            </span>
+           
+        </div>
+        <span class="border_bg_leftTop-7"></span>
+            
+        <span class="border_bg_rightBottom-7"></span>
+    </div>
+
+
+<!-- 配置雷达探测范围与周期窗口 -->
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup">
+        <h3>请配置雷达探测范围与周期</h3>
+        <input type="text" id="radar-cycle" placeholder="请输入雷达周期(700-1000ms)" /> <!-- 输入框 -->
+        <div class="radio-group">
+            <p>请选择雷达探测范围：</p>
+            <label>
+                <input type="radio" name="option" value="6" /> 6m
+            </label>
+            <label>
+                <input type="radio" name="option" value="30" /> 30m
+            </label>
+            <label>
+                <input type="radio" name="option" value="50" /> 50m
+            </label>
+            <label>
+                <input type="radio" name="option" value="100" /> 100m
+            </label>
+            <label>
+                <input type="radio" name="option" value="150" /> 150m
+            </label>
+            <label>
+                <input type="radio" name="option" value="210" /> 210m
+            </label>
+            <label>
+                <input type="radio" name="option" value="300" /> 300m
+            </label>
+            <label>
+                <input type="radio" name="option" value="420" /> 420m
+            </label>
+        </div>
+        <div class="popup-buttons">
+            <button  onclick="submitData(); submitRadarConfig(); submitpicture()">提交数据</button>
+            <button onclick="hidePopup()">关闭</button>
+        </div>
+        <span class="border_bg_leftTop-5"></span>
+            
+        <span class="border_bg_rightBottom-5"></span>
+    </div>
+    
+<!-- 协议参数配置 -->
+    <div class="overlay2" id="overlay2"></div>
+    <div class="popup2" id="popup2">
+        <div class="header">
+            <h3>请配置参数</h3>
+        </div>
+        
+        <!--  
+        <div class="files"  >
+                <label class="file-label2" for="file-upload" >加载subscribe </label> 
+                <input type="file" id="file-upload2" class="file-input2">    
+                <label class="file-label3" for="file-upload">加载publish</label> 
+                <input type="file" id="file-upload3" class="file-input3">  
+        </div>
+        -->
+        
+        <div class="message-con" id="message-con" style="margin: 0 auto;display:flex; height: 400px; width: 750px;">
+            <div class="receive-con" id="receive-con" style=" flex: 1;">
+                
+                <h5 >前端参数配置</h5>
+                
+                
+                <div>
+                    <span>箭头显示阈值：</span>
+                    <span><input type="text" id="adt" value="0.1"></span>
+                </div>
+                <div>
+                    <span>箭头显示比例：</span>
+                    <span><input type="text" id="adr" value="2"></span>
+                </div>
+                <div>
+                    <span>有效值上限：</span>
+                    <span><input type="text" id="Upper_limit" value="5"></span>
+                </div>
+                <div>
+                    <span>有效值下限：</span>
+                    <span><input type="text" id="Lower_limit" value="-5"></span>
+                </div>
+            </div>
+            
+            <div class="send-con" id="send-con"  style=" flex: 1;">
+                 
+                <h5 >后端参数配置</h5>
+                
+                
+                <div>
+                    <span>雷达高度：</span>
+                    <span><input type="text" id="Radar_height" value="5"></span>
+                </div>
+                <div>
+                    <span>岸边角度：</span>
+                    <span><input type="text" id="angle" value="45"></span>
+                </div>
+                <div>
+                    <span>矩阵平滑数量：</span>
+                    <span><input type="text" id="Matrix_number" value="5"></span>
+                </div>
+                <div>
+                    <span>正插值阈值：</span>
+                    <span><input type="text" id="Positive_interpolation" value="0.3"></span>
+                </div>
+                <div>
+                    <span>负插值阈值：</span>
+                    <span><input type="text" id="Negative_interpolation" value="-1.2"></span>
+                </div>
+            </div>
+        </div>
+        <span class="border_bg_leftTop-6"></span>
+            
+        <span class="border_bg_rightBottom-6"></span>
+        <div class="popup-buttons2">
+            <button onclick="submitData2(); submitRadarConfig2(); submitangle()">提交数据</button>
+            <button onclick="hidePopup2()">关闭</button>
+        </div>
+        
+    </div>
+
+ 
+<!-- 雷达与河流参数配置 -->
+<div class="overlay4" id="overlay4"></div>
+<div class="popup4" id="popup4">
+    <div class="header">
+        <h3>请配置参数</h3>
+    </div>
+    
+    <div class="message-con" id="message-con" style="margin: 0 auto;display:flex; height: 143px; width: 750px;">
+        <div class="receive-con" id="receive-con" style=" flex: 1;">
+            
+            
+            
+            
+            <div>
+                <span style=" flex: 1;">缆道端点距离（远）</span>
+                <span style=" flex: 1;"><input type="text" id="river_d1" value="40"></span>
+            </div>
+            <div>
+                <span style=" flex: 1;">雷达与缆道距离：</span>
+                <span style=" flex: 1;"><input type="text" id="r_r_long" value="5"></span>
+            </div>
+           
+        </div>
+        
+        <div class="send-con" id="send-con"  style=" flex: 1;">
+             
+            
+            
+            
+            <div>
+                <span style=" flex: 1;">缆道端点距离（近）</span>
+                <span style=" flex: 1;"><input type="text" id="river_d2" value="0.01"></span>
+            </div>
+            <!-- <div>
+                <span>雷达-缆道距离：</span>
+                <span><input type="text" id="angle" value="30"></span>
+            </div> -->
+            
+        </div>
+    </div>
+    <span class="border_bg_leftTop-6"></span>
+        
+    <span class="border_bg_rightBottom-7"></span>
+    <div class="popup-buttons4">
+        <button onclick="submitData4(); submitRadarConfig4()">提交数据</button>
+        <button onclick="hidePopup4()">关闭</button>
+    </div>
+    
+</div> 
+    
+
+
+
+
+    <!-- 选取探测范围 -->
+<!-- <div class="overlay4" id="overlay4"></div>
+<div class="popup4" id="popup4">
+    <h3>雷达探测范围：</h3>
+
+    <div class="row">
+        <label for="input1">请输入行数范围：</label>
+        <input type="text" id="initial-row" value="">
+        <input type="text" id="last-row" value="">
+    </div>
+    <div class="row">
+        <label for="input2">请输入角度范围：</label>
+        <input type="text" id="initial-row-p" value="">
+        <input type="text" id="last-row-p" value="">
+    </div>
+    <div class="popup-buttons4">
+        <button onclick="submitData4(); submitRadarConfig4();">提交数据</button>
+        <button onclick="hidePopup4()">关闭</button>
+    </div>
+</div> -->
+    
+    
+    
+    
+    
+    
+<script>
+    
+         function updateTime() {
+            const now = new Date();
+            const optionsDate = { year: 'numeric', month: 'long', day: 'numeric' }; // 日期格式化选项
+            const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit' }; // 时间格式化选项
+            const dateString = now.toLocaleDateString([], optionsDate); // 获取格式化后的日期
+            const timeString = now.toLocaleTimeString([], optionsTime); // 获取格式化后的时间
+            document.getElementById('timeDisplay').innerText = `${dateString} ${timeString}`;
+        }
+
+        setInterval(updateTime, 1000); // 每秒更新时间
+        updateTime(); // 初始化时间显示
+
+        
+
+//电池信息更新........................................................................................
+        function updateeva() {
+            $.get('/get_eva', function(data) {
+                console.log("电量:", data.electricity);
+                console.log("报警:", data.alarm);
+                console.log("电压:", data.voltage);
+                $('#electricity').text(data.electricity.toFixed(1) + ' %');  // 将温度数据保留一位小数并显示在页面上
+                $('#voltage').text(data.voltage.toFixed(1) + ' v');
+                // $('#right-box6-1').text(data.voltage.toFixed(1));
+            });
+        }
+
+        // 页面加载完成后立即更新一次温度，并设置每分钟更新一次
+        $(document).ready(function() {
+            updateeva();
+            setInterval(updateeva, 10000);  
+        });
+
+
+
+
+
+
+//雷达温度更新........................................................................................ ...............................................       
+        
+        function updateTemperature() {
+            $.get('/get_temperature', function(data) {
+                $('#right-box6-1').text(data.temperature.toFixed(1));  // 将温度数据保留一位小数并显示在页面上
+                checkAlarmValue();  // 温度更新后立即检查报警值
+            });
+        }
+
+        // 页面加载完成后立即更新一次温度，并设置每分钟更新一次
+        $(document).ready(function() {
+            updateTemperature();
+            setInterval(updateTemperature, 10000);  // 每60秒（即1分钟）执行一次updateTemperature函数
+        });
+
+        
+        function checkAlarmValue() {
+            const valueBox = document.getElementById("right-box6");
+            var valueText = document.getElementById('right-box6-1').innerText;
+
+            var value = parseFloat(valueText);
+            var banner = document.getElementById('alarmBanner');
+            
+            // 如果 value 无效，则不判断报警状态，也不显示任何报警内容
+            if (isNaN(value)) {
+                banner.style.display = 'none';
+                valueBox.classList.remove("alert-level-2");
+                return;
+            }
+            
+            
+            
+            
+            // 检查是否为有效数字
+            if (!isNaN(value)) {
+                if (value > 80) {
+                    valueBox.classList.add("alert-level-2");
+                    banner.style.display = 'block';
+                } else {
+                    valueBox.classList.remove("alert-level-2");
+                    banner.style.display = 'none';
+                }
+            }
+        }
+
+  // 每秒检查一次
+  setInterval(checkAlarmValue, 2000);
+
+
+       
+
+
+
+//三个弹窗的数据提交显示与关闭弹窗........................................................................................
+        function showPopup(event) {
+            event.preventDefault(); // 阻止默认链接行为
+            document.getElementById('overlay').style.display = 'block'; // 显示遮罩层
+            document.getElementById('popup').style.display = 'block'; // 显示弹出框
+        }
+
+        function hidePopup() {
+            document.getElementById('overlay').style.display = 'none'; // 隐藏遮罩层
+            document.getElementById('popup').style.display = 'none'; // 隐藏弹出框
+        }
+        
+        function submitData() {
+            //alert("数据已提交！"); // 提交数据的操作
+
+            hidePopup(); // 提交后关闭弹出框
+
+        }
+        function showPopup2(event) {
+            event.preventDefault(); // 阻止默认链接行为
+            document.getElementById('overlay2').style.display = 'block'; // 显示遮罩层
+            document.getElementById('popup2').style.display = 'block'; // 显示弹出框
+        }
+        
+        function hidePopup2() {
+            document.getElementById('overlay2').style.display = 'none'; // 隐藏遮罩层
+            document.getElementById('popup2').style.display = 'none'; // 隐藏弹出框
+        }
+        function submitData2() {
+            //alert("数据已提交！"); // 提交数据的操作
+            hidePopup2(); // 提交后关闭弹出框
+        }
+        
+        function showPopup3(event) {
+            event.preventDefault(); // 阻止默认链接行为
+            document.getElementById('overlay3').style.display = 'block'; // 显示遮罩层
+            document.getElementById('popup3').style.display = 'block'; // 显示弹出框
+        }
+        function hidePopup3() {
+            document.getElementById('overlay3').style.display = 'none'; // 隐藏遮罩层
+            document.getElementById('popup3').style.display = 'none'; // 隐藏弹出框
+        }
+        function submitData3() {
+            alert("数据已提交！"); // 提交数据的操作
+            hidePopup3(); // 提交后关闭弹出框
+       
+        }
+        function showPopup4(event) {
+            event.preventDefault(); // 阻止默认链接行为
+            document.getElementById('overlay4').style.display = 'block'; // 显示遮罩层
+            document.getElementById('popup4').style.display = 'block'; // 显示弹出框
+        }
+        function hidePopup4() {
+            document.getElementById('overlay4').style.display = 'none'; // 隐藏遮罩层
+            document.getElementById('popup4').style.display = 'none'; // 隐藏弹出框
+        }
+        function submitData4() {
+            alert("数据已提交！"); // 提交数据的操作
+            hidePopup4(); // 提交后关闭弹出框
+       
+        }
+
+ //内置参数配置导航栏点击效果..............................................................................................
+        function showSection(sectionId, element) {
+    // 隐藏所有段落
+       document.getElementById('section1').style.display = 'none'; 
+        document.getElementById('section2').style.display = 'none';
+
+        // 显示选择的段落
+        document.getElementById(sectionId).style.display = 'block';
+
+        // 移除所有链接的 active 类
+        var links = document.querySelectorAll('.popup3-navbar a');
+        links.forEach(link => {
+            link.classList.remove('active');
+        });
+
+        // 为当前链接添加 active 类
+        element.classList.add('active');
+    }
+
+
+//获取探测范围与周期配置框的数据进行验证
+// function validateAndSubmit() {
+//     // 获取输入框的值
+//     var radarCycle = document.getElementById('radar-cycle').value;
+//     // 获取选中的单选按钮的值
+//     var selectedOption = document.querySelector('input[name="option"]:checked');
+
+//     // 验证输入框的值
+//     if (!radarCycle || isNaN(radarCycle) || !Number.isInteger(Number(radarCycle)) ||parseInt(radarCycle) < 200 || parseInt(radarCycle) > 1000) {
+//         alert('雷达周期必须为整数且在200到1000之间');
+//         return;
+//     }
+
+//     // 验证单选按钮是否被选中
+//     if (!selectedOption) {
+//         alert('请选择雷达探测范围');
+//         return;
+//     }
+
+   
+//     //submitData();
+//     //submitRadarConfig();
+// }
+
+
+//获取探测范围与周期配置框的数据并上传至服务器..................................................................................
+
+function submitRadarConfig() {
+        
+        const radarCycle = document.getElementById("radar-cycle").value;
+        
+
+        const radioButtons = document.getElementsByName("option");
+        
+        
+        let selectedRange;
+
+        for (let i = 0; i < radioButtons.length; i++) {
+            if (radioButtons[i].checked) {
+                selectedRange = radioButtons[i].value;
+                break;
+            }
+        }
+
+
+        if (!radarCycle || isNaN(radarCycle) || !Number.isInteger(Number(radarCycle)) ||parseInt(radarCycle) < 200 || parseInt(radarCycle) > 1000) {
+        alert('雷达周期必须为整数且在200到1000之间');
+        return;
+        }
+
+    // 验证单选按钮是否被选中
+    if (!selectedRange) {
+        alert('请选择雷达探测范围');
+        return;
+        }
+        document.getElementById("right-box1-1").innerText = selectedRange;
+        // 调用专门的后端接口
+        fetch('http://47.97.38.203:5007/api/submit', {  // 假设接口为/api/submit
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ cycle: radarCycle, range: selectedRange })
+        })
+        .then(response => response.json())
+        .then(data => {
+             document.getElementById('output').innerText = `探测范围: ${data.range}m`;
+             document.getElementById('output2').innerText = `${data.range}`;
+             document.getElementById('k11').innerText = `${parseInt(data.range)}m`;
+             document.getElementById('k22').innerText = `${parseInt(data.range*2/3)}m`;
+             document.getElementById('k33').innerText = `${parseInt(data.range/3)}m`;
+             document.getElementById("right-box1-1").innerText = `${data.range}`;
+             document.getElementById("right-box1-1").innerText = `${data.range}`;
+             console.log(data);
+            
+         })
+         .catch((error) => {
+             console.error('错误:', error);
+             document.getElementById('output').innerText = '发生了错误，无法获取数据。';
+             
+         });
+    }
+
+//获取最大探测范围内矩阵始末行数并上传至服务器..................................................................................
+function submitRadarConfig4() {
+        const initial_row = document.getElementById("initial-row").value;
+        const last_row = document.getElementById("last-row").value;
+        const initial_row_p = document.getElementById("initial-row-p").value;
+        const last_row_p = document.getElementById("last-row-p").value;
+
+        // 调用专门的后端接口
+        fetch('http://47.97.38.203:5007/api/submit2', {  // 假设接口为/api/submit
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ initial: initial_row, last: last_row, initial_p: initial_row_p, last_p: last_row_p })
+        })
+        .then(response => response.json())
+        .then(data => {
+             document.getElementById('data-output').innerText = `起始行数: ${data.cycle}, 末尾行数: ${data.range}`;
+             //console.log(data);
+         })
+         .catch((error) => {
+             console.error('错误:', error);
+             document.getElementById('data-output').innerText = '发生了错误，无法获取数据。';
+         });
+    }
+
+
+//上传后端配置参数..................................................................................
+function submitRadarConfig2() {
+    
+        const Radar_height = document.getElementById("Radar_height").value;
+        
+        const Matrix_number = document.getElementById("Matrix_number").value;
+        const Positive_interpolation = document.getElementById("Positive_interpolation").value;
+        const Negative_interpolation = document.getElementById("Negative_interpolation").value;
+        const angle = document.getElementById("angle").value;
+
+        document.getElementById("right-box2-1").innerText = Radar_height
+        document.getElementById("right-box4-1").innerText = angle + '°'
+        // 调用专门的后端接口
+        fetch('http://47.97.38.203:5007/api/submit3', {  // 假设接口为/api/submit
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                Radar_h: parseFloat(Radar_height), 
+                Matrix_n: parseInt(Matrix_number), 
+                Positive_i: parseFloat(Positive_interpolation), 
+                Negative_i: parseFloat(Negative_interpolation),
+                angle_ab: parseFloat(angle) 
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('data-output').innerText = `雷达高度: ${Radar_height}, 岸边角度: ${angle},矩阵平滑数: ${Matrix_number}, 正插值阈值: ${Positive_interpolation}, 负插值阈值: ${Negative_interpolation}`;
+             //console.log(data);
+            
+         })
+         .catch((error) => {
+             console.error('错误:', error);
+             document.getElementById('data-output').innerText = '发生了错误，无法获取数据。';
+         });
+    }
+
+
+
+//上传雷达和缆道位置关系配置参数..................................................................................
+function submitRadarConfig4() {
+    
+    const river_d1 = document.getElementById("river_d1").value;
+    
+    const river_d2 = document.getElementById("river_d2").value;
+    const r_r_long = document.getElementById("r_r_long").value;
+    
+
+    
+    // 调用专门的后端接口
+    fetch('http://47.97.38.203:5007/api/submit4', {  // 假设接口为/api/submit
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            river_d1: parseFloat(river_d1), 
+            river_d2: parseInt(river_d2), 
+            r_r_long: parseFloat(r_r_long), 
+            
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('data-output').innerText = `雷达高度: ${river_d1}, 岸边角度: ${river_d2},矩阵平滑数: ${r_r_long}`;
+         //console.log(data);
+        
+     })
+     .catch((error) => {
+         console.error('错误:', error);
+         document.getElementById('data-output').innerText = '发生了错误，无法获取数据。';
+     });
+}
+
+
+//上传雷达复位数据信息..................................................................................
+function restart() {
+    // 添加确认提示
+    const confirmed = confirm("确定要重启设备吗？");
+    if (!confirmed) {
+        return; // 用户取消，不执行后续操作
+    }
+    // 定义字节数据
+    const byteArray = new Uint8Array([
+                0xcd, 0xab, 0x34, 0x12, 0x73, 0x79, 0x73, 0x5f, 0x72, 0x65, 0x73, 0x65, 0x74,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+            ]);
+
+    // 将字节数组转换为Base64字符串
+    const base64Data = btoa(String.fromCharCode.apply(null, byteArray));
+    
+    // 定义发送函数
+    function sendData() {
+    
+        // 调用专门的后端接口
+        fetch('http://47.97.38.203:5007/api/receive_bytes', {  // 假设接口为/api/receive_bytes
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ data: base64Data })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            
+        })
+         .catch((error) => {
+            console.error('Error:', error);
+        });
+    }     
+         
+    // 第一次立即发送
+    sendData();
+
+    // 第二次延时20秒发送
+    setTimeout(() => {
+        sendData();
+    }, 20000);  // 20秒 = 20000毫秒     
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//切换背景图片......................................................................................................................
+//切换背景图片......................................................................................................................
+function submitpicture() {
+        const centerBox = document.getElementById('background');
+        //const centerBox = document.getElementById('center-box');
+        const radioButtons = document.getElementsByName("option");
+        const T = document.getElementById("k1");
+        const M = document.getElementById("k2");
+        let selectedRange;
+
+        for (let i = 0; i < radioButtons.length; i++) {
+            if (radioButtons[i].checked) {
+                selectedRange = radioButtons[i].value;
+                break;
+            }
+        }
+        const output = parseInt(selectedRange, 10);
+        // 判断选中的值并更换背景图片
+        if (output === 6) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/6m.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        } else if (output === 30) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/30m.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        } else if (output === 50) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/通用.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        } else if (output === 100) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/210m.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        } else if (output === 150) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/150m.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        }else if (output === 210) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/210m.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        }else if (output === 300) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/通用反.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        }else if (output === 420) {
+            centerBox.style.backgroundImage = "url('../static/shuyang/420m.jpg')"; // 替换为你的背景图片路径
+            T.innerText = '';
+            M.innerText = '';
+        }else {
+            centerBox.style.backgroundImage = "none"; // 如果没有匹配的值，清除背景
+        }
+       
+}
+
+
+
+//切换背景图片......................................................................................................................
+//切换背景图片......................................................................................................................
+// 自定义旋转的中心点
+function submitangle() {
+    const angleInput = document.getElementById('angle').value;
+    const angleab = parseFloat(angleInput)-45; // 获取输入的角度并转换为浮点
+    
+    const originX = 870|| 0; // 默认值为 0
+    const originY = 700 || 0; // 默认值为 0
+
+    if (!isNaN(angleab)) {
+        const background = document.getElementById('background');
+
+        // 设置 transform-origin 为自定义点
+        background.style.transformOrigin = `${originX}px ${originY}px`;
+        // 直接根据输入的角度进行旋转，不累加
+        background.style.transform = `translate(-50%, -50%) rotate(${angleab}deg)`; 
+    } else {
+        alert('请输入有效的角度！');
+    }
+}
+
+//画散点图..................................................................................
+
+// 颜色映射函数
+function getJetColor(value, minValue, maxValue) {
+    const range = maxValue - minValue;
+    const normalized = (value - minValue) / range; // 将值规范到 [0, 1] 范围
+
+    let r, g, b;
+
+    if (normalized <= 0) { // 值小于最小值
+        r = 0; g = 0; b = 255; // 蓝色
+    } else if (normalized >= 1) { // 值大于最大值
+        r = 255; g = 0; b = 0; // 红色
+    } else {
+        if (normalized < 0.5) {
+            r = Math.floor(normalized * 2 * 255); // 从蓝色到绿色渐变
+            g = 255; // 绿色通道满值
+            b = 255 - Math.floor(normalized * 2 * 255); // 从蓝色减少
+        } else {
+            r = 255; // 红色通道满值
+            g = 255 - Math.floor((normalized - 0.5) * 2 * 255); // 从绿色减少
+            b = 0; // 蓝色通道为0
+        }
+    }
+
+    return `rgba(${r}, ${g}, ${b}, 1)`; // 返回 RGBA 颜色字符串
+}
+
+
+// 获取矩阵数据
+ // 假设通过 fetch 获取矩阵数据
+ let allData = []; // 用于存储所有历史数据点
+
+ function fetchData() {
+    const adt = document.getElementById("adt").value;
+    const adr = document.getElementById("adr").value;
+    const Upper_limit = document.getElementById("Upper_limit").value;
+    const Lower_limit = document.getElementById("Lower_limit").value;
+    const angle = document.getElementById("angle").value;
+    
+    const output = document.getElementById("output2").innerText;
+
+    
+    let points = []; // 用于保存点和箭头的坐标及值    <!--    .then(matrix => {-->
+    const threshold = adt; // 设置阈值
+
+    fetch('/api/get_matrix')
+    .then(response => response.json())
+        //.then(matrix => {
+        .then(data => {
+        document.getElementById('right-box5-1').innerText = data.mean_value;
+        
+        // 将 mean_value 添加到 meanValues 数组
+        meanValues.push(data.mean_value.toFixed(2));
+        let matrix = data.matrixx;
+
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const numRows = matrix.length;
+        const numCols = matrix[0].length;
+
+        // 清空画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 计算中心点
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height;
+
+        let contourPoints = []; // 用于记录箭头和短线的起止点
+
+        // 定义速度范围
+        const minValue = Number(Lower_limit); // 最小值
+        const maxValue = Number(Upper_limit); // 最大值
+
+        for (let i = 30; i < numRows; i += 7) {
+            for (let j = 37; j < 220; j += 6) {         // 显示正负45度范围
+            //for (let j = 17; j < 238; j += 10) {       // 显示正负30度范围
+                const value = matrix[i][j];
+                const radians = Math.acos(1 - j / 128);
+
+                // 只绘制有效值
+                if (value > minValue && value < maxValue) {
+                    const R = parseInt(output, 10);
+                    let radius;
+                    if (R === 6 || R === 30 || R === 50  ) {
+                        radius = i * 4; 
+                    } else if (R === 100 || R === 150 || R === 210 || R === 300 || R === 420) {
+                        radius = i * 2; 
+                    }
+
+                    // 转换为笛卡尔坐标
+                    const xCoord = Math.floor(radius * Math.cos(radians) + centerX); 
+                    const yCoord = Math.floor(-(radius * Math.sin(radians)) + centerY); 
+                    
+                    // 保存点的信息
+                    points.push({ x: xCoord, y: yCoord, value });
+
+                    // 只绘制箭头当值大于阈值
+                    if (Math.abs(value) > threshold) {
+                    // 计算箭头颜色
+                    const arrowColor = getJetColor(value, -3, 3);
+
+                    ctx.beginPath();
+                    ctx.moveTo(xCoord, yCoord); 
+
+                    // 根据值的正负决定箭头方向
+                    const arrowStart = { x: xCoord, y: yCoord }; // 箭头起点
+                    let arrowEnd;
+
+                    //const rotationAngle = Math.PI / 3; // 60度的弧度数
+                    const rotationAngle = Math.PI * (3/2+angle/180); // 60度的弧度数
+
+                    // 计算旋转后的箭头终点坐标
+                    if (value < 0) {
+                        arrowEnd = {
+                            x: Math.floor(xCoord - 20 * Math.cos(rotationAngle)),
+                            y: Math.floor(yCoord - 20 * Math.sin(rotationAngle))
+                        };
+                    } else {
+                        arrowEnd = {
+                            x: Math.floor(xCoord + 20 * Math.cos(rotationAngle)),
+                            y: Math.floor(yCoord + 20 * Math.sin(rotationAngle))
+                        };
+                    }
+
+                    // 记录箭头区域的起止点
+                    contourPoints.push(arrowStart);
+                    contourPoints.push(arrowEnd);
+
+                    ctx.lineTo(arrowEnd.x, arrowEnd.y);
+                    ctx.lineWidth = Math.max(1, Math.abs(value) * adr); 
+                    ctx.strokeStyle = arrowColor; // 设置箭头颜色
+                    ctx.stroke();
+                    ctx.closePath();
+
+                    // 绘制箭头头部，进行旋转调整
+                    ctx.beginPath();
+                    const headLength = 8; 
+
+                    // 计算新箭头头部的角度
+                    const headAngle1 = rotationAngle - Math.PI / 7; // 左侧
+                    const headAngle2 = rotationAngle + Math.PI / 7; // 右侧
+                    
+                    if (value < 0) {
+                        ctx.moveTo(arrowEnd.x, arrowEnd.y);
+                        ctx.lineTo(
+                            arrowEnd.x + headLength * Math.cos(headAngle1), 
+                            arrowEnd.y + headLength * Math.sin(headAngle1)
+                        );
+                        ctx.lineTo(
+                            arrowEnd.x + headLength * Math.cos(headAngle2), 
+                            arrowEnd.y + headLength * Math.sin(headAngle2)
+                        );
+                    } else {
+                        ctx.moveTo(arrowEnd.x, arrowEnd.y);
+                        ctx.lineTo(
+                            arrowEnd.x - headLength * Math.cos(headAngle1), 
+                            arrowEnd.y - headLength * Math.sin(headAngle1)
+                        );
+                        ctx.lineTo(
+                            arrowEnd.x - headLength * Math.cos(headAngle2), 
+                            arrowEnd.y - headLength * Math.sin(headAngle2)
+                        );
+                    }
+
+                    ctx.fillStyle = arrowColor; // 与箭身保持相同颜色
+                    ctx.fill();
+                    ctx.closePath();
+                    }
+                    else {
+                    // 如果值小于阈值，则绘制一个固定宽度的短线段
+                    ctx.beginPath();
+                    ctx.moveTo(xCoord, yCoord);
+                    
+                    // 计算旋转后的短线终点坐标
+                    const rotationAngle = Math.PI * (3/2+angle/180); // 60度的弧度数
+                    const shortLineLength = 20; // 短线的长度
+
+                    const shortLineEnd = {
+                        x: Math.floor(xCoord + shortLineLength * Math.cos(rotationAngle)), // 旋转后计算 x 坐标
+                        y: Math.floor(yCoord + shortLineLength * Math.sin(rotationAngle))  // 旋转后计算 y 坐标
+                    };
+
+                    ctx.lineTo(shortLineEnd.x, shortLineEnd.y); 
+
+                    // 记录短线的起止点
+                    contourPoints.push({ x: xCoord, y: yCoord }); // 短线起点
+                    contourPoints.push(shortLineEnd); // 短线终点
+
+                    ctx.lineWidth = 0.5; 
+                    ctx.strokeStyle = 'white';
+                    ctx.stroke();
+                    ctx.closePath();
+                   }
+
+                }
+            }
+        }
+
+        // 在所有箭头和短线区域外绘制轮廓线
+        if (contourPoints.length > 0) {
+            const hull = convexHull(contourPoints);
+            
+            const offset = 8; // 偏移量
+
+            ctx.beginPath();
+            ctx.setLineDash([8, 8]); // 设置虚线样式
+            ctx.moveTo(hull[0].x, hull[0].y);
+            for (let i = 1; i < hull.length; i++) {
+                // 计算轮廓线的偏移点
+                const prev = hull[i - 1];
+                const curr = hull[i];
+                const dx = (curr.y - prev.y);
+                const dy = -(curr.x - prev.x);
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const normX = (dx / length) * offset;
+                const normY = (dy / length) * offset;
+
+                // 绘制偏移后的点
+                ctx.lineTo(curr.x + normX, curr.y + normY);
+            }
+            ctx.closePath();
+
+            // 设置轮廓线样式
+            ctx.lineWidth = 0.8; 
+            ctx.strokeStyle = 'white'; // 轮廓线颜色
+            ctx.stroke();
+            ctx.setLineDash([]); // 还原为实线
+        }
+
+        // 将当前数据点添加到历史数据中
+        allData.push(...points);
+        
+        // 处理鼠标移动事件
+        canvas.addEventListener('mousemove', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            let found = false;
+
+            // 隐藏提示框
+            const tooltip = document.getElementById('tooltip');
+            const vss = document.getElementById('right-box3-1');
+            tooltip.style.display = 'none';
+
+            // 遍历所有点检测鼠标位置
+            for (const point of points) {
+                const distance = Math.sqrt((mouseX - point.x) ** 2 + (mouseY - point.y) ** 2);
+                if (distance < 10) { // 10是点的半径
+                    tooltip.innerHTML = `速度: ${point.value.toFixed(2)}`;
+                    vss.innerHTML = `${point.value.toFixed(2)}`;
+                    //tooltip.style.display = 'block';
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                tooltip.style.display = 'none'; // 如果没有点在鼠标下，隐藏提示框
+            }
+        });
+
+        // 鼠标离开画布时隐藏提示框
+        canvas.addEventListener('mouseleave', () => {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.display = 'none';
+        });
+
+    })
+    .catch(error => console.error("获取数据失败:", error));
+}
+
+
+// 凸包算法实现（Graham scan）
+function convexHull(points) {
+    points = points.slice(); // 复制点数组
+    points.sort((a, b) => a.x - b.x || a.y - b.y); // 按x坐标排序
+
+    const lower = [];
+    for (const p of points) {
+        while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
+            lower.pop();
+        }
+        lower.push(p);
+    }
+
+    const upper = [];
+    for (let i = points.length - 1; i >= 0; i--) {
+        const p = points[i];
+        while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
+            upper.pop();
+        }
+        upper.push(p);
+    }
+
+    upper.pop(); // 上半边的最后一个点和下半边是重复的
+    lower.pop(); // 下半边的最后一个点和上半边是重复的
+
+    return lower.concat(upper); // 返回凸包的点
+}
+
+// 计算叉乘
+function cross(o, a, b) {
+    return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+}
+
+
+
+
+// 每隔2秒请求一次数据
+setInterval(fetchData, 2000);
+
+// 初始请求一次数据
+fetchData();
+
+// function saveData() {
+//     // 将只保存的历史数据（假设只保存 values）转换为文本字符串
+//     const values = allData.map(point => point.value.toFixed(2)); // 提取值
+//     const dataStr = values.join('——'); // 将值转换为文本，每个值占一行
+//     const blob = new Blob([dataStr], { type: "text/plain" }); // 将类型改为文本
+
+//     const url = URL.createObjectURL(blob);
+    
+//     // 创建下载链接
+//     const a = document.createElement("a");
+//     a.href = url;
+//     a.download = "historical_data.txt"; // 文件名
+//     a.click();
+
+//     // 释放 URL 对象
+//     URL.revokeObjectURL(url);
+//         }
+
+
+
+let meanValues = []; // 用于保存所有 mean_value 的值
+
+function saveData() {
+    // 将所有 mean_value 的值转换为文本字符串
+    const dataStr = meanValues.join('——'); // 每个值之间用 '——' 分隔
+
+    const blob = new Blob([dataStr], { type: "text/plain" }); // 将类型改为文本
+
+    const url = URL.createObjectURL(blob);
+
+    // 创建下载链接
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "historical_mean_values.txt"; // 文件名
+    a.click();
+
+    // 释放 URL 对象
+    URL.revokeObjectURL(url);
+}
+
+// 绑定保存按钮的点击事件
+document.getElementById("saveButton").addEventListener("click", saveData);
+    </script>   
+</body>
+</html>
