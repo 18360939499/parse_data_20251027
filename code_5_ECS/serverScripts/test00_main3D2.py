@@ -10,6 +10,7 @@ import base64
 import re
 import pymysql
 import json
+import queue
 
 # ---------------------------------------------------------------------------------
 # 与前端的接口
@@ -278,19 +279,34 @@ def insert_data(latest_original_data, latest_point_data):
     except pymysql.MySQLError as e:
         print(f"数据库操作失败: {e}")
 
+ready_to_upload_data_queue = queue.Queue()  # 全局队列
 
-def periodic_db_upload():
-    global original_data
-    global to_web
+if False:
+    def periodic_db_upload():
+        global original_data
+        global to_web
 
-    while True:
-        time.sleep(UPLOAD_INTERVAL_SECOND)  # 每300秒（5分钟）执行一次
-        if original_data is not None and to_web is not None:
-            try:
-                insert_data(original_data, to_web)
-                print(f"[定时上传] 已上传 ")
-            except Exception as e:
-                print(f"[定时上传] 上传失败: {e}")
+        while True:
+            time.sleep(UPLOAD_INTERVAL_SECOND)  # 每300秒（5分钟）执行一次
+            if original_data is not None and to_web is not None:
+                try:
+                    insert_data(original_data, to_web)
+                    print(f"[定时上传] 已上传 ")
+                except Exception as e:
+                    print(f"[定时上传] 上传失败: {e}")
+else:
+    def periodic_db_upload():
+        while True:
+            time.sleep(UPLOAD_INTERVAL_SECOND)
+
+            # 从队列取数据（没有就不执行）
+            if not ready_to_upload_data_queue.empty():
+                try:
+                    original_data, to_web = ready_to_upload_data_queue.get()# 取出一条
+                    insert_data(original_data, to_web)# 上传
+                    print(f"[定时上传] 已上传 1 帧数据")
+                except Exception as e:
+                    print(f"[定时上传] 失败: {e}")   
 
 
 # ---------------------------------------------------------------------------------
@@ -443,7 +459,7 @@ def up_data_thread():
     if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
         buf_data.clear()
         print("未找到数据同步帧头，清空当前缓冲区数据", flush=True)
-    
+        return
     packet_header = get_packet_header(buf_data[start_idx:start_idx + packet_header_size])
     print("msg_header.totalLength: %d\n", packet_header["totalLength"], flush=True)
 
@@ -454,7 +470,9 @@ def up_data_thread():
     buf_data = buf_data[start_idx + packet_header["totalLength"]:]  # 清除上一帧的数据
     
     to_web = 0
-    print('已收到雷达数据', packet_header["frameId"],flush=True)
+    ready_to_upload_data_queue.put((original_data, to_web))# 新数据放入队列
+
+    print('get_and_queue', packet_header["frameId"],flush=True)
 
 if False:
     def read_radar_data(recv_buf_data):
