@@ -29,21 +29,23 @@ Compress(app1)
 MAX_RADAR_LEN = (0x02C204) # 170000
 UPLOAD_INTERVAL_SECOND=1 #20min
 
-matrix_history = deque(maxlen=5)
-threshold_z = 0.3
-threshold_f = -1.2
-H = 5
-N = 5
-A = 45
-width1 = 40
-width2 = 0.01
-long = 5
-radar_range2 = 6
-latest_avg_value = 0
-latest_matrix = None
-latest_matrix2 = None
-original_data = None
-to_web = None
+if False:
+    matrix_history = deque(maxlen=5)
+    threshold_z = 0.3
+    threshold_f = -1.2
+    H = 5
+    N = 5
+    A = 45
+    width1 = 40
+    width2 = 0.01
+    long = 5
+    radar_range2 = 6
+    latest_avg_value = 0
+    latest_matrix = None
+    latest_matrix2 = None
+    original_data = None
+    to_web = None
+
 # 数据库连接信息
 try:
     db = pymysql.connect(
@@ -268,9 +270,12 @@ def insert_data(latest_original_data, latest_point_data):
     try:
         with db.cursor() as cursor:
             matrix_bytes = pymysql.Binary(bytes(latest_original_data))  # 转成bytes再包装
-
-            matrix_rounded = np.round(latest_point_data, 2)
-            matrix_str = json.dumps(matrix_rounded.tolist())
+            if False:
+                #numpy数组 → 保留两位小数 → 转普通列表 → 转JSON字符串
+                matrix_rounded = np.round(latest_point_data, 2)#将numpy 数组里的所有数字，四舍五入保留 2 位小数
+                matrix_str = json.dumps(matrix_rounded.tolist())#因为 JSON 不认识 numpy 类型,把 numpy 数组转成普通 Python 列表。把 Python 列表 → JSON 字符串
+            else:
+                matrix_str = latest_point_data
 
             sql = "INSERT INTO test20260527 (matrix_original, speed) VALUES (%s, %s)"
             cursor.execute(sql, (matrix_bytes, matrix_str))
@@ -323,57 +328,57 @@ if False:
     m300 = '0000000200000004000000230040010027100005'
     m420 = '0000000200000004000000190040010036B00005'
 
-systeminfo = {  # 默认的参数配置，以后可以根据默认文件来读取
-    "rangeRes": 0.0471313931,
-    "dopplerRes": 0.017786909,  # 有多个接收天线
-    "numRangeBins": 128,  # 更改doppler与range点数后  要修改的起始参数
-    "numDopplerBins": 128,  # 更改doppler与range点数后  要修改的起始参数
-    "numSensors": 4,
-    "numTxAnt": 3,
-    "numRxAnt": 4,
-    "numTxAzimuthAnt": 0,
-    "numTxElevationAnt": 0,
-    "padding": [0, 0, 0],
-    "board_temperature": 0,
-    "length": 65536
-}
+    systeminfo = {  # 默认的参数配置，以后可以根据默认文件来读取
+        "rangeRes": 0.0471313931,
+        "dopplerRes": 0.017786909,  # 有多个接收天线
+        "numRangeBins": 128,  # 更改doppler与range点数后  要修改的起始参数
+        "numDopplerBins": 128,  # 更改doppler与range点数后  要修改的起始参数
+        "numSensors": 4,
+        "numTxAnt": 3,
+        "numRxAnt": 4,
+        "numTxAzimuthAnt": 0,
+        "numTxElevationAnt": 0,
+        "padding": [0, 0, 0],
+        "board_temperature": 0,
+        "length": 65536
+    }
 
-board_temperature = 0
+    board_temperature = 0
 
 buf_data = bytearray()
 if False:
     buf_data5307 = bytearray()
     buf_data5407 = bytearray()
 
-be_save = bytearray()  # 更改doppler与range点数后  要修改的起始参数
-radar_data = np.zeros((256, 128))  # 继承自be_save
-to_web = np.zeros((1, 100))  # 准备给前端的矩阵
+    be_save = bytearray()  # 更改doppler与range点数后  要修改的起始参数
+    radar_data = np.zeros((256, 128))  # 继承自be_save
+    to_web = np.zeros((1, 100))  # 准备给前端的矩阵
 
 radar = None
 if False:
     radar5307 = None
     radar5407 = None
 
-radar_cycle = '1000'
-radar_cycle_old = '1000'
-radar_range_old = '6'
-radar_range = '6'
+    radar_cycle = '1000'
+    radar_cycle_old = '1000'
+    radar_range_old = '6'
+    radar_range = '6'
 
 connect_state = 0
 if False:
     connect_state5307 = 0
     connect_state5407 = 0
 
-starting_rows = 0
-starting_rows_old = 0
-ending_rows = systeminfo['numRangeBins'] - 1
-ending_rows_old = systeminfo['numRangeBins'] - 1
+    starting_rows = 0
+    starting_rows_old = 0
+    ending_rows = systeminfo['numRangeBins'] - 1
+    ending_rows_old = systeminfo['numRangeBins'] - 1
 
-staring_angles = 0
-staring_angles_old = 0
-ending_angles = 255
-ending_angles_old = 255
-frame_len = 251216
+    staring_angles = 0
+    staring_angles_old = 0
+    ending_angles = 255
+    ending_angles_old = 255
+    frame_len = 251216
 
 # 缓冲区大小阈值
 buf_data_threshold = 10 * MAX_RADAR_LEN  # 10帧数据的大小
@@ -417,11 +422,12 @@ def get_packet_header(header_bArr):
 
 def up_data_thread():
     global buf_data  # 相当于一个缓存，存放还未处理的雷达数据
-    global be_save  # 存放一帧数据
-    global systeminfo
-    global radar_data  # 继承自be_save
-    global to_web
-    global latest_matrix
+    if False:
+        global be_save  # 存放一帧数据
+        global systeminfo
+        global radar_data  # 继承自be_save
+        global to_web
+        global latest_matrix
     # global frame_len
     # 动态调整缓冲区大小
     memory_usage = psutil.virtual_memory().percent / 100.0
@@ -434,7 +440,6 @@ def up_data_thread():
     if len(buf_data) >= buf_data_threshold:
         buf_data.clear()
         print("缓冲区已满，暂停接收数据", flush=True)
-
         return
 
     if False:
@@ -466,11 +471,11 @@ def up_data_thread():
     if start_idx+packet_header["totalLength"]>len(buf_data):
         print("数据不完整，等待下一轮接收", flush=True)
         return
-    original_data=buf_data[start_idx:start_idx + packet_header["totalLength"]]
+    temp_original_data=buf_data[start_idx:start_idx + packet_header["totalLength"]]
     buf_data = buf_data[start_idx + packet_header["totalLength"]:]  # 清除上一帧的数据
     
-    to_web = 0
-    ready_to_upload_data_queue.put((original_data, to_web))# 新数据放入队列
+    temp_to_web = 0
+    ready_to_upload_data_queue.put((temp_original_data, temp_to_web))# 新数据放入队列
 
     print('get_and_queue', packet_header["frameId"],flush=True)
 
@@ -686,34 +691,44 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
         self.ipaddr = ipaddr
         self.port = port
         self.num = num
+        self.radar_conn = None  # 用成员变量，替代全局radar
 
     def server_link(self, conn, addr):
-        global radar
+        if False:
+            global radar
         global connect_state
         global buf_data
         connect_state = 1
+        if False:
+            radar = conn
+        else:
+            self.radar_conn = conn  # 绑定当前雷达连接
+
         print("5207，网关已经连接到服务器", flush=True)
-        radar = conn
+
         while True:
             try:
-                data = radar.recv(1024 * 8)
-                if data:
-                    print("接收到的截面线数据长度为", len(data), flush=True)
-                    if len(buf_data) >= buf_data_threshold:
-                        print("缓冲区已满，丢弃数据", flush=True)
-                        continue
-                    buf_data.extend(data)
-                else:
+                data = conn.recv(1024 * 64)  # 之前是8K,更大缓冲区
+                if not data:
                     break
-            except Exception:
+                print("接收到的截面线数据长度为", len(data), flush=True)
+                if len(buf_data) >= buf_data_threshold:
+                    print("缓冲区已满，丢弃数据", flush=True)
+                    continue
+                buf_data.extend(data)
+            
+            except Exception as e:
+                print(f"连接异常: {e}", flush=True)
                 break
         conn.close()
         connect_state = 0
+        self.radar_conn = None
+        print("[INFO] 5207,网关断开连接", flush=True)
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 65)
+        s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 64)
 
         s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         s_pro.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
@@ -722,17 +737,25 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
 
         s_pro.bind((self.ipaddr, self.port))
         s_pro.listen(self.num)
-        print('Waiting link...', flush=True)
+        print('Waiting 5207 link...', flush=True)
+
         while True:
             conn, addr = s_pro.accept()
-            print("Success connect from ", conn, flush=True)
-            # conn.send(b'\x01\x02\x03\x04\x05\06\x07\x08')
+            print("新连接来自 ", addr, flush=True)
             p = threading.Thread(target=self.server_link, args=(conn, addr))
-            p.daemon = True
+            if False:
+                p.daemon = True  # 建议关闭，防止突然丢数据
             p.start()
 
-    def send_data(self, data, radar):
-        radar.send(data)
+    def send_data(self, data):# 现在这个方法可以正常使用了
+        if self.radar_conn:
+            try:
+                self.radar_conn.send(data)
+                print(f"发送数据成功: {len(data)} 字节")
+            except Exception as e:
+                print(f"发送失败: {e}")
+        else:
+            print("未连接雷达，无法发送")
 
 
 # -------------------------------------------------------------------------------------------------------------------------
@@ -887,45 +910,45 @@ if False:
 
 # -------------------------------------------------------------------------------------------------------------------------
 
+if False:
+    def connect_sever():
+        global buf_data
+        ip_address = '192.168.1.200'
+        ip_port = 29172
+        first_marge_buff = bytearray()
+        total_parse_size = 65636  # 65636#16777316
 
-def connect_sever():
-    global buf_data
-    ip_address = '192.168.1.200'
-    ip_port = 29172
-    first_marge_buff = bytearray()
-    total_parse_size = 65636  # 65636#16777316
+        # 创建一个socket对象
+        client_tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # 设置连接超时时间（秒）
+        client_tcp_socket.settimeout(10)
+        try:
+            # 尝试连接到雷达IP地址和端口
+            client_tcp_socket.connect((ip_address, ip_port))
+        except socket.timeout:
+            print("连接超时")
+            # 可以在这里处理连接超时的情况
+        except socket.error as e:
+            print(f"连接错误: {e}")
+            # 可以在这里处理其他socket错误
+        else:
+            print("连接成功")
+            while True:
+                response = client_tcp_socket.recv(65636)  # 如果没有指定或者为0，那么会接收所有可用的数据，直到达到系统缓冲区的大小限制
+                if not response:
+                    # 如果没有数据，可能连接已经关闭
+                    break
+                # save_data_to_file(response)
 
-    # 创建一个socket对象
-    client_tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # 设置连接超时时间（秒）
-    client_tcp_socket.settimeout(10)
-    try:
-        # 尝试连接到雷达IP地址和端口
-        client_tcp_socket.connect((ip_address, ip_port))
-    except socket.timeout:
-        print("连接超时")
-        # 可以在这里处理连接超时的情况
-    except socket.error as e:
-        print(f"连接错误: {e}")
-        # 可以在这里处理其他socket错误
-    else:
-        print("连接成功")
-        while True:
-            response = client_tcp_socket.recv(65636)  # 如果没有指定或者为0，那么会接收所有可用的数据，直到达到系统缓冲区的大小限制
-            if not response:
-                # 如果没有数据，可能连接已经关闭
-                break
-            # save_data_to_file(response)
-
-            # 数据流控制
-            if len(buf_data) >= buf_data_threshold:
-                print("缓冲区已满，丢弃数据", flush=True)
-                continue
-            buf_data.extend(response)
-            # 如果一段时间内没有接收到数据，认为连接断开，重新连接
-            if time.time() - last_received_time > 30:  # 超过30秒未收到数据
-                print("超过30秒未接收到数据，正在重新连接...")
-                break
+                # 数据流控制
+                if len(buf_data) >= buf_data_threshold:
+                    print("缓冲区已满，丢弃数据", flush=True)
+                    continue
+                buf_data.extend(response)
+                # 如果一段时间内没有接收到数据，认为连接断开，重新连接
+                if time.time() - last_received_time > 30:  # 超过30秒未收到数据
+                    print("超过30秒未接收到数据，正在重新连接...")
+                    break
 
 
 def start_server():  # 启动flask框架线程
@@ -935,16 +958,20 @@ def start_server():  # 启动flask框架线程
 # 线程存储
 threads = {}
 threads_lock = threading.Lock()
-WATCHDOG_INTERVAL = 600000  # 看门狗检测间隔
+WATCHDOG_INTERVAL = 600  # 看门狗检测间隔,单位秒 
 
+server = None  # 全局保存TCP服务对象
 
 def watchdog():
     """监控关键线程是否存活，若发现异常，则重启线程"""
     global threads
+    global server  # 把server变成全局，才能真正重启
 
     while True:
         with threads_lock:  # 确保线程安全
-            # 检查 TCP/IP 服务器线程
+            # 检查 TCP/IP 服务器线程：先看看 threads 字典里有没有存叫 tcp_ip_server 的线程
+            #并且再看看这个线程是不是已经死了（不运行了）
+            #如果两个条件都满足 → 进入重启逻辑
             if "tcp_ip_server" in threads and not threads["tcp_ip_server"].is_alive():
                 print("[看门狗] TCP/IP 服务器线程已停止，正在重启...", flush=True)
                 server = ServerThread('', 5207, 5)
@@ -962,11 +989,19 @@ def watchdog():
                 print("[看门狗] 时间处理线程已停止，正在重启...", flush=True)
                 threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
                 threads["time"].start()
-            # 检查 up_data_thread
-            if "up_data_thread" in threads and not threads["up_data_thread"].is_alive():
-                print("[看门狗] up_data_thread 已停止，正在重启...", flush=True)
-                threads["up_data_thread"] = threading.Thread(target=up_data_thread, daemon=True)
-                threads["up_data_thread"].start()
+
+            if False:
+                # 检查 up_data_thread
+                if "up_data_thread" in threads and not threads["up_data_thread"].is_alive():
+                    print("[看门狗] up_data_thread 已停止，正在重启...", flush=True)
+                    threads["up_data_thread"] = threading.Thread(target=up_data_thread, daemon=True)
+                    threads["up_data_thread"].start()
+
+            # ===================== 定时上传线程 =====================
+            if "periodic_upload" in threads and not threads["periodic_upload"].is_alive():
+                print("[看门狗] periodic_db_upload 已停止，正在重启...", flush=True)
+                threads["periodic_upload"] = threading.Thread(target=periodic_db_upload, daemon=True)
+                threads["periodic_upload"].start()
 
         # 异步检查 Flask API
         threading.Thread(target=check_flask_api, daemon=True).start()
@@ -984,7 +1019,8 @@ def check_flask_api():
         print("[看门狗] 无法访问 Flask API", flush=True)
 
 if __name__ == '__main__':
-    with threads_lock:
+    with threads_lock:#我要开始用 threads 了，你们其他线程都先等一下，等我用完你们再用！
+
         # 启动 TCP/IP 服务器线程
         server = ServerThread('', 5207, 5)
         threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
@@ -1014,10 +1050,11 @@ if __name__ == '__main__':
         threads["time"].start()
         print("时间处理线程已启动")
 
-        # 启动 up_data_thread 线程
-        threads["up_data_thread"] = threading.Thread(target=up_data_thread, daemon=True)
-        threads["up_data_thread"].start()
-        print("up_data_thread 已启动")
+        if False:
+            # 启动 up_data_thread 线程
+            threads["up_data_thread"] = threading.Thread(target=up_data_thread, daemon=True)
+            threads["up_data_thread"].start()
+            print("up_data_thread 已启动")
 
         threads["periodic_upload"] = threading.Thread(target=periodic_db_upload, daemon=True)
         threads["periodic_upload"].start()
