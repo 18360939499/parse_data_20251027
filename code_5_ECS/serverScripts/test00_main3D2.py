@@ -26,7 +26,7 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0x02C204) # 170000
+MAX_RADAR_LEN = 66666 #(0x02C204) # 170000
 UPLOAD_INTERVAL_SECOND=1 #20min
 
 if False:
@@ -392,8 +392,7 @@ memory_threshold = 0.8  # 80% 内存使用率
 def run_time_thread():
     while True:
         timethread()
-        time.sleep(0.1) #testxy_time.sleep(10)
-
+        time.sleep(10) #testxy_time.sleep(10)#0.1也可以
 
 def timethread():
     time2 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -458,26 +457,27 @@ def up_data_thread():
 
             print('已更新雷达数据', flush=True)
 
-    packet_header_size = 28
-    sync_word = b'\x02\x01\x04\x03\x06\x05\x08\x07'
-    start_idx = buf_data.find(sync_word)
-    if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
-        buf_data.clear()
-        print("未找到数据同步帧头，清空当前缓冲区数据", flush=True)
-        return
-    packet_header = get_packet_header(buf_data[start_idx:start_idx + packet_header_size])
-    print("msg_header.totalLength: %d\n", packet_header["totalLength"], flush=True)
+    if len(buf_data) >= MAX_RADAR_LEN:  # 170000
+        packet_header_size = 28
+        sync_word = b'\x02\x01\x04\x03\x06\x05\x08\x07'
+        start_idx = buf_data.find(sync_word)
+        if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
+            buf_data.clear()
+            print("未找到数据同步帧头，清空当前缓冲区数据", flush=True)
+            return
+        packet_header = get_packet_header(buf_data[start_idx:start_idx + packet_header_size])
+        print("msg_header.totalLength:\n", packet_header["totalLength"], flush=True)
 
-    if start_idx+packet_header["totalLength"]>len(buf_data):
-        print("数据不完整，等待下一轮接收", flush=True)
-        return
-    temp_original_data=buf_data[start_idx:start_idx + packet_header["totalLength"]]
-    buf_data = buf_data[start_idx + packet_header["totalLength"]:]  # 清除上一帧的数据
-    
-    temp_to_web = 0
-    ready_to_upload_data_queue.put((temp_original_data, temp_to_web))# 新数据放入队列
+        if start_idx+packet_header["totalLength"]>len(buf_data):
+            print("数据不完整，等待下一轮接收", flush=True)
+            return
+        temp_original_data=buf_data[start_idx:start_idx + packet_header["totalLength"]]
+        buf_data = buf_data[start_idx + packet_header["totalLength"]:]  # 清除上一帧的数据
+        
+        temp_to_web = 0
+        ready_to_upload_data_queue.put((temp_original_data, temp_to_web))# 新数据放入队列
 
-    print('get_and_queue', packet_header["frameId"],flush=True)
+        print('get_and_queue', packet_header["frameId"],flush=True)
 
 if False:
     def read_radar_data(recv_buf_data):
@@ -711,7 +711,7 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
                 data = conn.recv(1024 * 64)  # 之前是8K,更大缓冲区
                 if not data:
                     break
-                print("接收到的截面线数据长度为", len(data), flush=True)
+                print("recv data_len", len(data), flush=True)
                 if len(buf_data) >= buf_data_threshold:
                     print("缓冲区已满，丢弃数据", flush=True)
                     continue
