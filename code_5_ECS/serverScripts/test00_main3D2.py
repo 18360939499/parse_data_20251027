@@ -303,7 +303,7 @@ if False:
 else:
     def periodic_db_upload():
         while True:
-            time.sleep(UPLOAD_INTERVAL_SECOND)
+            # time.sleep(UPLOAD_INTERVAL_SECOND)
 
             # 从队列取数据（没有就不执行）
             if not ready_to_upload_data_queue.empty():
