@@ -277,7 +277,7 @@ def insert_data(latest_original_data, latest_point_data):
             else:
                 matrix_str = latest_point_data
 
-            sql = "INSERT INTO test20260527 (matrix_original, speed) VALUES (%s, %s)"
+            sql = "INSERT INTO test20260612sihong (matrix_original, speed) VALUES (%s, %s)"
             cursor.execute(sql, (matrix_bytes, matrix_str))
             db.commit()
             if False:
@@ -708,7 +708,7 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
         else:
             self.radar_conn = conn  # 绑定当前雷达连接
 
-        print("5207，网关已经连接到服务器", flush=True)
+        print("5200，网关已经连接到服务器", flush=True)
 
         while True:
             try:
@@ -727,7 +727,7 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
         conn.close()
         connect_state = 0
         self.radar_conn = None
-        print("[INFO] 5207,网关断开连接", flush=True)
+        print("[INFO] 5200,网关断开连接", flush=True)
 
     def server_start(self):
         s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -741,7 +741,7 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
 
         s_pro.bind((self.ipaddr, self.port))
         s_pro.listen(self.num)
-        print('Waiting 5207 link...', flush=True)
+        print('Waiting 5200 link...', flush=True)
 
         while True:
             conn, addr = s_pro.accept()
@@ -978,7 +978,7 @@ def watchdog():
             #如果两个条件都满足 → 进入重启逻辑
             if "tcp_ip_server" in threads and not threads["tcp_ip_server"].is_alive():
                 print("[看门狗] TCP/IP 服务器线程已停止，正在重启...", flush=True)
-                server = ServerThread('', 5207, 5)
+                server = ServerThread('', 5200, 5)
                 threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
                 threads["tcp_ip_server"].start()
 
@@ -1016,7 +1016,7 @@ def watchdog():
 def check_flask_api():
     """检查 Flask API 是否存活"""
     try:
-        response = requests.get("http://127.0.0.1:5007/api/get_matrix", timeout=3)
+        response = requests.get("http://127.0.0.1:5001/api/get_matrix", timeout=3)
         if response.status_code != 200:
             print("[看门狗] Flask API 可能失去响应", flush=True)
     except requests.RequestException:
@@ -1026,7 +1026,7 @@ if __name__ == '__main__':
     with threads_lock:#我要开始用 threads 了，你们其他线程都先等一下，等我用完你们再用！
 
         # 启动 TCP/IP 服务器线程
-        server = ServerThread('', 5207, 5)
+        server = ServerThread('', 5200, 5)
         threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
         threads["tcp_ip_server"].start()
         print("TCP/IP 服务器已启动")
@@ -1070,5 +1070,5 @@ if __name__ == '__main__':
         print("看门狗线程已启动")
 
     # 启动 Flask，threaded=True 让其不会阻塞主线程
-    app1.run(host='0.0.0.0', port=5007, threaded=True)
+    app1.run(host='0.0.0.0', port=5001, threaded=True)
 
