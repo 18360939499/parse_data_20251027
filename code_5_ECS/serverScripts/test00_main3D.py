@@ -277,7 +277,7 @@ def insert_data(latest_original_data, latest_point_data):
             else:
                 matrix_str = latest_point_data
 
-            sql = "INSERT INTO test20260612sihong (matrix_original, speed) VALUES (%s, %s)"
+            sql = "INSERT INTO test0213 (matrix_original, speed) VALUES (%s, %s)"
             cursor.execute(sql, (matrix_bytes, matrix_str))
             db.commit()
             if False:
