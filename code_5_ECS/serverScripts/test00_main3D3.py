@@ -26,7 +26,7 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = 64000 #(0x02C204)#测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
+MAX_RADAR_LEN = (178612+36)#测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
 UPLOAD_INTERVAL_SECOND=1 #20min
 
 if False:
@@ -1016,7 +1016,7 @@ def watchdog():
 def check_flask_api():
     """检查 Flask API 是否存活"""
     try:
-        response = requests.get("http://127.0.0.1:5001/api/get_matrix", timeout=3)
+        response = requests.get("http://127.0.0.1:5002/api/get_matrix", timeout=3)
         if response.status_code != 200:
             print("[看门狗] Flask API 可能失去响应", flush=True)
     except requests.RequestException:
@@ -1070,5 +1070,5 @@ if __name__ == '__main__':
         print("看门狗线程已启动")
 
     # 启动 Flask，threaded=True 让其不会阻塞主线程
-    app1.run(host='0.0.0.0', port=5001, threaded=True)
+    app1.run(host='0.0.0.0', port=5002, threaded=True)
 
