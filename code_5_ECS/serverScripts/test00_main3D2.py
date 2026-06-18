@@ -982,17 +982,17 @@ def watchdog():
                 threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
                 threads["tcp_ip_server"].start()
 
+           # 检查 时间处理线程
+            if "time" in threads and not threads["time"].is_alive():
+                print("[看门狗] 时间处理线程已停止，正在重启...", flush=True)
+                threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
+                threads["time"].start()
+                
             # 检查 矩阵处理线程
             if "up_data_matrix" in threads and not threads["up_data_matrix"].is_alive():
                 print("[看门狗] 矩阵处理线程已停止，正在重启...", flush=True)
                 threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
                 threads["up_data_matrix"].start()
-
-            # 检查 时间处理线程
-            if "time" in threads and not threads["time"].is_alive():
-                print("[看门狗] 时间处理线程已停止，正在重启...", flush=True)
-                threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
-                threads["time"].start()
 
             if False:
                 # 检查 up_data_thread
@@ -1044,15 +1044,15 @@ if __name__ == '__main__':
             tcp_ip_server_5407.start()  # 启动tcp/ip服务端线程
             print('5407tcp/ip已启动')
 
-        # 启动矩阵处理线程
-        threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
-        threads["up_data_matrix"].start()
-        print("矩阵处理线程已启动")
-
         # 启动时间处理线程
         threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
         threads["time"].start()
         print("时间处理线程已启动")
+
+        # 启动矩阵处理线程
+        threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
+        threads["up_data_matrix"].start()
+        print("矩阵处理线程已启动")
 
         if False:
             # 启动 up_data_thread 线程
