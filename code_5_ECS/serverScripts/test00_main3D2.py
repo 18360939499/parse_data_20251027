@@ -28,6 +28,7 @@ Compress(app1)
 
 MAX_RADAR_LEN = (0x399650+36) #(0x02C204)#测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
 UPLOAD_INTERVAL_SECOND=1 #20min
+PRINT_TIME_INTERVAL_SECOND=10
 
 if False:
     matrix_history = deque(maxlen=5)
@@ -394,11 +395,11 @@ memory_threshold = 0.8  # 80% 内存使用率
 def run_time_thread():
     while True:
         timethread()
-        time.sleep(10) #testxy_time.sleep(10)#0.1也可以
+        time.sleep(PRINT_TIME_INTERVAL_SECOND) #testxy_time.sleep(10)#0.1也可以
 
 def timethread():
     time2 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(time2, flush=True)
+    print(time2, len(buf_data),flush=True)
 
 
 def run_up_data_thread():
@@ -715,7 +716,6 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
                 data = conn.recv(1024 * 64)  # 之前是8K,更大缓冲区
                 if not data:
                     break
-                print("recv ", len(data), flush=True)
                 if len(buf_data) >= buf_data_threshold:
                     print("缓冲区已满，丢弃数据", flush=True)
                     continue
