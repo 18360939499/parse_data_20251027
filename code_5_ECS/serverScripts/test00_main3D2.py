@@ -30,6 +30,13 @@ MAX_RADAR_LEN = (0x399650) #(0x02C204)#测试当雷达发送一帧数据大于MA
 UPLOAD_INTERVAL_SECOND=1 #20min
 PRINT_TIME_INTERVAL_SECOND=10
 
+
+# 线程存储
+threads = {}
+threads_lock = threading.Lock()
+
+buf_lock = threading.Lock() #给 buf_data 加锁（必须）
+
 if False:
     matrix_history = deque(maxlen=5)
     threshold_z = 0.3
@@ -438,51 +445,53 @@ def up_data_thread():
     else:
         buf_data_threshold = 10 * MAX_RADAR_LEN  # 恢复默认缓冲区大小
 
-    # 数据流控制
-    if len(buf_data) >= buf_data_threshold:
-        print("缓冲区已满，暂停接收数据", len(buf_data),flush=True)
-        buf_data.clear()
-        return
+    with buf_lock:
 
-    if False:
-        if len(buf_data) >= MAX_RADAR_LEN:  # 170000
-
-            print("buf_data的长度", len(buf_data), flush=True)
-
-            flag, buf_data = read_radar_data(buf_data)
-
-            if (flag != 0xFF):
-                return;
-
-            buf_data = buf_data[MAX_RADAR_LEN:]  # 清除上一帧的数据
-
-            to_web = 0
-
-            print('已更新雷达数据', flush=True)
-
-    if len(buf_data) >= MAX_RADAR_LEN:  # 170000
-        packet_header_size = 28
-        sync_word = b'\x02\x01\x04\x03\x06\x05\x08\x07'
-        start_idx = buf_data.find(sync_word)
-        if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
-            print("未找到数据同步帧头，清空当前缓冲区数据", len(buf_data),flush=True)
+        # 数据流控制
+        if len(buf_data) >= buf_data_threshold:
+            print("缓冲区已满，暂停接收数据", len(buf_data),flush=True)
             buf_data.clear()
             return
 
-        packet_header = get_packet_header(buf_data[start_idx:start_idx + packet_header_size])
+        if False:
+            if len(buf_data) >= MAX_RADAR_LEN:  # 170000
 
-        if start_idx+packet_header["totalLength"]>len(buf_data):
-            print(packet_header["frameId"],"not all",start_idx,len(buf_data),packet_header["totalLength"], flush=True)
-            return
-        print(packet_header["frameId"],"all",start_idx,len(buf_data), packet_header["totalLength"], flush=True)
-        temp_original_data=buf_data[start_idx: start_idx + packet_header["totalLength"]]
-        buf_data = buf_data[start_idx + packet_header["totalLength"]:]  # 清除上一帧的数据
-        print( packet_header["frameId"],"clr",len(buf_data), flush=True)
+                print("buf_data的长度", len(buf_data), flush=True)
 
-        temp_to_web = packet_header["frameId"]
-        ready_to_upload_data_queue.put((temp_original_data, temp_to_web))# 新数据放入队列
+                flag, buf_data = read_radar_data(buf_data)
 
-        print( packet_header["frameId"],'tque',flush=True)
+                if (flag != 0xFF):
+                    return;
+
+                buf_data = buf_data[MAX_RADAR_LEN:]  # 清除上一帧的数据
+
+                to_web = 0
+
+                print('已更新雷达数据', flush=True)
+
+        if len(buf_data) >= MAX_RADAR_LEN:  # 170000
+            packet_header_size = 28
+            sync_word = b'\x02\x01\x04\x03\x06\x05\x08\x07'
+            start_idx = buf_data.find(sync_word)
+            if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
+                print("未找到数据同步帧头，清空当前缓冲区数据", len(buf_data),flush=True)
+                buf_data.clear()
+                return
+
+            packet_header = get_packet_header(buf_data[start_idx:start_idx + packet_header_size])
+
+            if start_idx+packet_header["totalLength"]>len(buf_data):
+                print(packet_header["frameId"],"not all",start_idx,len(buf_data),packet_header["totalLength"], flush=True)
+                return
+            print(packet_header["frameId"],"all",start_idx,len(buf_data), packet_header["totalLength"], flush=True)
+            temp_original_data=buf_data[start_idx: start_idx + packet_header["totalLength"]]
+            buf_data = buf_data[start_idx + packet_header["totalLength"]:]  # 清除上一帧的数据
+            print( packet_header["frameId"],"clr",len(buf_data), flush=True)
+
+            temp_to_web = packet_header["frameId"]
+            ready_to_upload_data_queue.put((temp_original_data, temp_to_web))# 新数据放入队列
+
+            print( packet_header["frameId"],'tque',flush=True)
 
 if False:
     def read_radar_data(recv_buf_data):
@@ -719,7 +728,8 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
                 if len(buf_data) >= buf_data_threshold:
                     print("缓冲区已满，丢弃数据", flush=True)
                     continue
-                buf_data.extend(data)
+                with buf_lock:
+                    buf_data.extend(data)
             
             except Exception as e:
                 print(f"连接异常: {e}", flush=True)
@@ -959,9 +969,7 @@ def start_server():  # 启动flask框架线程
     app1.run(host='0.0.0.0')
 
 
-# 线程存储
-threads = {}
-threads_lock = threading.Lock()
+
 WATCHDOG_INTERVAL = 600  # 看门狗检测间隔,单位秒 
 
 server = None  # 全局保存TCP服务对象
