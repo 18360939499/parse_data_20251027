@@ -293,9 +293,6 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
         else:
             print("未连接雷达，无法发送")
 
-def start_server():  # 启动flask框架线程
-    app1.run(host='0.0.0.0')
-
 
 if __name__ == '__main__':
     with threads_lock:#我要开始用 threads 了，你们其他线程都先等一下，等我用完你们再用！
