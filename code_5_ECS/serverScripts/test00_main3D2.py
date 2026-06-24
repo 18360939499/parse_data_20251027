@@ -32,6 +32,7 @@ HEADER_SIZE = 28
 PORT_NUM = 5207
 PRINT_TIME_INTERVAL_SECOND=10
 
+RADAR_SEND_INTERVAL =10 #雷达发送时间间隔
 WATCHDOG_INTERVAL = 10      # 看门狗检测间隔,单位秒 检查频率
 TCP_TIMEOUT = 30           # 心跳
 PARSER_TIMEOUT = 60
@@ -159,37 +160,52 @@ def parse_data_thread():
                 print("frame_queue full drop")
             print(frame_Id,'tque',flush=True)
 
-
-def tcp_server(host='0.0.0.0', port=PORT_NUM):
+# 1. server（只负责 listen）
+# 2. session（只负责 conn recv）
+# 3. reconnect（只负责恢复）
+def tcp_server(host='0.0.0.0', port=PORT_NUM):#监听所有网卡（0.0.0.0）
     global thread_heartbeat
 
     while True:
         try:
+            # 1. 创建监听socket（只做一次逻辑）
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)#允许端口复用,防止程序重启时报：Address already in use
             s.bind((host, port))
-            s.listen(5)
-            print(port,"TCP Server started，Waiting link...")
+            s.listen(10)#最多允许 N 个客户端排队连接
+                        
+            print(f"{port} TCP Server started，Waiting client link...")
 
-            conn, addr = s.accept()
-            print("网关connected:", addr)
-            conn.settimeout(10)
-
+            # 2. 接受连接循环
             while True:
+                conn, addr = s.accept()
+                print("网关connected:", addr)
+                conn.settimeout((RADAR_SEND_INTERVAL*3))#如果 N 秒没有 recv 数据 →抛 socket.timeout
+
                 try:
-                    data = conn.recv(65535)
-                    if not data:
-                        break
-                    raw_queue.put(data)
+                    # 3. 数据接收循环
+                    while True:
+                        data = conn.recv(65535)
+                        if not data:#客户端断开（正常关闭），返回值为b''，会进入这里
+                            print("[TCP] client closed connection")
+                            break
+                        raw_queue.put(data)
 
-                    with heartbeat_lock:
-                        thread_heartbeat["tcp"] = time.time()
-
+                        with heartbeat_lock:
+                            thread_heartbeat["tcp"] = time.time()
+                except socket.timeout:# ❗只是“没数据”，不是断线
+                    print("[TCP] recv timeout (no data)")   
                 except Exception as e:
-                    print("TCP error:", e)
-                    break
+                    print("[TCP] recv error:", e)     
+                finally:
+                    # 4. 保证释放连接
+                    try:
+                        conn.close()
+                    except:
+                        pass
+                    print("[TCP] connection closed, waiting new client")
         except Exception as e:
-            print("[TCP] 重连中:", e)
+            print("[TCP] 服务器启动异常, restarting::", e)
             time.sleep(2)
 
 def restart_tcp():
