@@ -8,7 +8,7 @@ tcp_port_num = 29172
 MAX_PACKET_SIZE_BYTES = 160000
 
 # 单个文件最大大小：2GB
-MAX_FILE_SIZE = 100  * 1024 * 1024
+MAX_FILE_SIZE = 200  * 1024 * 1024
 # MAX_FILE_SIZE = 2 * 1024 * 1024
 
 # ================== 创建保存目录 ==================
