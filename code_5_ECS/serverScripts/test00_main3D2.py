@@ -111,13 +111,12 @@ def periodic_db_upload():
         with heartbeat_lock:
             thread_heartbeat["db"] = time.time()
 
-        if not frame_queue.empty():
-            try:
-                original_data, to_web = frame_queue.get()# 取出一条
-                insert_data(original_data, to_web)# 上传
-                print(to_web,"tdb", flush=True)
-            except Exception as e:
-                print(f"[定时上传] 失败: {e}")   
+        try:
+            original_data, to_web = frame_queue.get(timeout=2)# 取出一条
+            insert_data(original_data, to_web)# 上传
+            print(to_web,"tdb", flush=True)
+        except Exception as e:
+            print(f"fail to db: {e}")   
 
 
 def parse_data_thread():
@@ -152,37 +151,44 @@ def parse_data_thread():
             temp_original_data=buffer_data[start_idx: start_idx + frame_total_len]
             buffer_data = buffer_data[start_idx + frame_total_len:]  # 清除上一帧的数据
             print(frame_Id,"clr",len(buffer_data), flush=True)
-            frame_queue.put((temp_original_data, frame_Id))# 新数据放入队列
+            try:
+                frame_queue.put((temp_original_data, frame_Id), timeout=2)
+            except:
+                print("frame_queue full drop")
             print(frame_Id,'tque',flush=True)
 
 
 def tcp_server(host='0.0.0.0', port=PORT_NUM):
     global thread_heartbeat
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((host, port))
-    s.listen(5)
-    print(port,"TCP Server started，Waiting link...")
-
-    conn, addr = s.accept()
-    print("网关connected:", addr)
-    conn.settimeout(10)
-
     while True:
         try:
-            data = conn.recv(65535)
-            if not data:
-                break
-            raw_queue.put(data)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((host, port))
+            s.listen(5)
+            print(port,"TCP Server started，Waiting link...")
 
-            with heartbeat_lock:
-                thread_heartbeat["tcp"] = time.time()
+            conn, addr = s.accept()
+            print("网关connected:", addr)
+            conn.settimeout(10)
 
+            while True:
+                try:
+                    data = conn.recv(65535)
+                    if not data:
+                        break
+                    raw_queue.put(data)
+
+                    with heartbeat_lock:
+                        thread_heartbeat["tcp"] = time.time()
+
+                except Exception as e:
+                    print("TCP error:", e)
+                    break
         except Exception as e:
-            print("TCP error:", e)
-            break
-
+            print("[TCP] 重连中:", e)
+            time.sleep(2)
 
 def restart_tcp():
     global tcp_thread
