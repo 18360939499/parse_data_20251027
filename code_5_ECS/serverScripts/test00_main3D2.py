@@ -37,6 +37,21 @@ threads_lock = threading.Lock()
 
 buf_lock = threading.Lock() #给 buf_data 加锁（必须）
 
+
+WATCHDOG_INTERVAL = 600  # 看门狗检测间隔,单位秒 
+
+server = None  # 全局保存TCP服务对象
+ready_to_upload_data_queue = queue.Queue()  # 全局队列
+buf_data = bytearray()
+radar = None
+connect_state = 0
+# 缓冲区大小阈值
+buf_data_threshold = 10 * MAX_RADAR_LEN  # 10帧数据的大小
+
+# 调整缓冲区大小的阈值
+memory_threshold = 0.8  # 80% 内存使用率
+
+
 # 数据库连接信息
 try:
     db = pymysql.connect(
@@ -65,6 +80,20 @@ except Exception as e:
     print(f"其他错误: {e}")
     exit()
 
+def get_packet_header(header_bArr):
+    header_struct = "<HHHHIIIII"
+    header_unpack = struct.unpack(header_struct, header_bArr)
+
+    header = {
+        "syncWord": [hex(header_unpack[0]), hex(header_unpack[1]), hex(header_unpack[2]), hex(header_unpack[3])],
+        "frameId": header_unpack[4],
+        "coreId": header_unpack[5],
+        "TLVNums": header_unpack[6],
+        "totalLength": header_unpack[7],
+        "detectObjNums": header_unpack[8]
+    }
+    return header
+
 def insert_data(latest_original_data, latest_point_data):
     try:
         with db.cursor() as cursor:
@@ -76,8 +105,6 @@ def insert_data(latest_original_data, latest_point_data):
             db.commit()
     except pymysql.MySQLError as e:
         print(f"数据库操作失败: {e}")
-
-ready_to_upload_data_queue = queue.Queue()  # 全局队列
 
 def periodic_db_upload():
     while True:
@@ -93,44 +120,10 @@ def periodic_db_upload():
             except Exception as e:
                 print(f"[定时上传] 失败: {e}")   
 
-buf_data = bytearray()
-radar = None
-connect_state = 0
-# 缓冲区大小阈值
-buf_data_threshold = 10 * MAX_RADAR_LEN  # 10帧数据的大小
-
-# 调整缓冲区大小的阈值
-memory_threshold = 0.8  # 80% 内存使用率
-
-def run_time_thread():
-    while True:
-        timethread()
-        time.sleep(PRINT_TIME_INTERVAL_SECOND) #testxy_time.sleep(10)#0.1也可以
-
-def timethread():
-    time2 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(time2, len(buf_data),flush=True)
-
-
 def run_up_data_thread():
     while True:
         up_data_thread()
         time.sleep(0.2) #testxy_time.sleep(9.8)
-
-def get_packet_header(header_bArr):
-    header_struct = "<HHHHIIIII"
-    header_unpack = struct.unpack(header_struct, header_bArr)
-
-    header = {
-        "syncWord": [hex(header_unpack[0]), hex(header_unpack[1]), hex(header_unpack[2]), hex(header_unpack[3])],
-        "frameId": header_unpack[4],
-        "coreId": header_unpack[5],
-        "TLVNums": header_unpack[6],
-        "totalLength": header_unpack[7],
-        "detectObjNums": header_unpack[8]
-    }
-
-    return header
 
 def up_data_thread():
     global buf_data  # 相当于一个缓存，存放还未处理的雷达数据
@@ -173,6 +166,65 @@ def up_data_thread():
             ready_to_upload_data_queue.put((temp_original_data, temp_to_web))# 新数据放入队列
 
             print( packet_header["frameId"],'tque',flush=True)
+
+
+def run_time_thread():
+    while True:
+        timethread()
+        time.sleep(PRINT_TIME_INTERVAL_SECOND) #testxy_time.sleep(10)#0.1也可以
+
+def timethread():
+    time2 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(time2, len(buf_data),flush=True)
+
+
+def watchdog():
+    """监控关键线程是否存活，若发现异常，则重启线程"""
+    global threads
+    global server  # 把server变成全局，才能真正重启
+
+    while True:
+        with threads_lock:  # 确保线程安全
+            # 检查 TCP/IP 服务器线程：先看看 threads 字典里有没有存叫 tcp_ip_server 的线程
+            #并且再看看这个线程是不是已经死了（不运行了）
+            #如果两个条件都满足 → 进入重启逻辑
+            if "tcp_ip_server" in threads and not threads["tcp_ip_server"].is_alive():
+                print("[看门狗] TCP/IP 服务器线程已停止，正在重启...", flush=True)
+                server = ServerThread('', 5207, 5)
+                threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
+                threads["tcp_ip_server"].start()
+
+           # 检查 时间处理线程
+            if "time" in threads and not threads["time"].is_alive():
+                print("[看门狗] 时间处理线程已停止，正在重启...", flush=True)
+                threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
+                threads["time"].start()
+                
+            # 检查 矩阵处理线程
+            if "up_data_matrix" in threads and not threads["up_data_matrix"].is_alive():
+                print("[看门狗] 矩阵处理线程已停止，正在重启...", flush=True)
+                threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
+                threads["up_data_matrix"].start()
+
+            # ===================== 定时上传线程 =====================
+            if "periodic_upload" in threads and not threads["periodic_upload"].is_alive():
+                print("[看门狗] periodic_db_upload 已停止，正在重启...", flush=True)
+                threads["periodic_upload"] = threading.Thread(target=periodic_db_upload, daemon=True)
+                threads["periodic_upload"].start()
+
+        # 异步检查 Flask API
+        threading.Thread(target=check_flask_api, daemon=True).start()
+
+        time.sleep(WATCHDOG_INTERVAL)
+
+def check_flask_api():
+    """检查 Flask API 是否存活"""
+    try:
+        response = requests.get("http://127.0.0.1:5007/api/get_matrix", timeout=3)
+        if response.status_code != 200:
+            print("[看门狗] Flask API 可能失去响应", flush=True)
+    except requests.RequestException:
+        print("[看门狗] 无法访问 Flask API", flush=True)
 
 class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用保活功能，设置大缓存来保证大数据传输
 
@@ -244,58 +296,6 @@ class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用
 def start_server():  # 启动flask框架线程
     app1.run(host='0.0.0.0')
 
-WATCHDOG_INTERVAL = 600  # 看门狗检测间隔,单位秒 
-
-server = None  # 全局保存TCP服务对象
-
-def watchdog():
-    """监控关键线程是否存活，若发现异常，则重启线程"""
-    global threads
-    global server  # 把server变成全局，才能真正重启
-
-    while True:
-        with threads_lock:  # 确保线程安全
-            # 检查 TCP/IP 服务器线程：先看看 threads 字典里有没有存叫 tcp_ip_server 的线程
-            #并且再看看这个线程是不是已经死了（不运行了）
-            #如果两个条件都满足 → 进入重启逻辑
-            if "tcp_ip_server" in threads and not threads["tcp_ip_server"].is_alive():
-                print("[看门狗] TCP/IP 服务器线程已停止，正在重启...", flush=True)
-                server = ServerThread('', 5207, 5)
-                threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
-                threads["tcp_ip_server"].start()
-
-           # 检查 时间处理线程
-            if "time" in threads and not threads["time"].is_alive():
-                print("[看门狗] 时间处理线程已停止，正在重启...", flush=True)
-                threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
-                threads["time"].start()
-                
-            # 检查 矩阵处理线程
-            if "up_data_matrix" in threads and not threads["up_data_matrix"].is_alive():
-                print("[看门狗] 矩阵处理线程已停止，正在重启...", flush=True)
-                threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
-                threads["up_data_matrix"].start()
-
-            # ===================== 定时上传线程 =====================
-            if "periodic_upload" in threads and not threads["periodic_upload"].is_alive():
-                print("[看门狗] periodic_db_upload 已停止，正在重启...", flush=True)
-                threads["periodic_upload"] = threading.Thread(target=periodic_db_upload, daemon=True)
-                threads["periodic_upload"].start()
-
-        # 异步检查 Flask API
-        threading.Thread(target=check_flask_api, daemon=True).start()
-
-        time.sleep(WATCHDOG_INTERVAL)
-
-
-def check_flask_api():
-    """检查 Flask API 是否存活"""
-    try:
-        response = requests.get("http://127.0.0.1:5007/api/get_matrix", timeout=3)
-        if response.status_code != 200:
-            print("[看门狗] Flask API 可能失去响应", flush=True)
-    except requests.RequestException:
-        print("[看门狗] 无法访问 Flask API", flush=True)
 
 if __name__ == '__main__':
     with threads_lock:#我要开始用 threads 了，你们其他线程都先等一下，等我用完你们再用！
