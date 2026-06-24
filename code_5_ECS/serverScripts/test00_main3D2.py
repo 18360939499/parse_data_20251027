@@ -26,30 +26,15 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0x399650) #(0x02C204)#测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
-UPLOAD_INTERVAL_SECOND=1 #20min
+MAX_RADAR_LEN = (0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
+SYNC_WORD = b'\x02\x01\x04\x03\x06\x05\x08\x07'
+HEADER_SIZE = 28
+PORT_NUM = 5207
 PRINT_TIME_INTERVAL_SECOND=10
-DEAL_INTERVAL_SECOND=10
 
-# 线程存储
-threads = {}
-threads_lock = threading.Lock()
-
-buf_lock = threading.Lock() #给 buf_data 加锁（必须）
-
-
-WATCHDOG_INTERVAL = 600  # 看门狗检测间隔,单位秒 
-
-server = None  # 全局保存TCP服务对象
-ready_to_upload_data_queue = queue.Queue()  # 全局队列
-buf_data = bytearray()
-radar = None
-connect_state = 0
-# 缓冲区大小阈值
-buf_data_threshold = 10 * MAX_RADAR_LEN  # 10帧数据的大小
-
-# 调整缓冲区大小的阈值
-memory_threshold = 0.8  # 80% 内存使用率
+buffer_data = bytearray()
+raw_queue = queue.Queue(maxsize=2000)
+frame_queue = queue.Queue(maxsize=2000)
 
 
 # 数据库连接信息
@@ -108,75 +93,85 @@ def insert_data(latest_original_data, latest_point_data):
 
 def periodic_db_upload():
     while True:
-        # time.sleep(UPLOAD_INTERVAL_SECOND)
-
-        # 从队列取数据（没有就不执行）
-        if not ready_to_upload_data_queue.empty():
+        if not frame_queue.empty():
             try:
-                original_data, to_web = ready_to_upload_data_queue.get()# 取出一条
+                original_data, to_web = frame_queue.get()# 取出一条
                 insert_data(original_data, to_web)# 上传
-                # print(f"saved to db:{to_web}", flush=True)
                 print(to_web,"tdb", flush=True)
             except Exception as e:
                 print(f"[定时上传] 失败: {e}")   
 
-def run_up_data_thread():
+def parse_data_thread():
+    global buffer_data
     while True:
-        up_data_thread()
-        time.sleep(DEAL_INTERVAL_SECOND) #testxy_time.sleep(9.8)
+        data = raw_queue.get()
+        buffer_data.extend(data)
 
-def up_data_thread():
-    global buf_data  # 相当于一个缓存，存放还未处理的雷达数据
-    # global frame_len
-    # 动态调整缓冲区大小
-    memory_usage = psutil.virtual_memory().percent / 100.0
-    if memory_usage > memory_threshold:
-        buf_data_threshold = 5 * MAX_RADAR_LEN  # 临时减少最大缓冲区大小以腾出空间
-    else:
-        buf_data_threshold = 10 * MAX_RADAR_LEN  # 恢复默认缓冲区大小
+        while True:
+            start_idx = buffer_data.find(SYNC_WORD)
+            if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
+                print("未找到数据同步帧头，清空当前缓冲区数据", len(buffer_data),flush=True)
+                buffer_data.clear()
+                break
+            
+            if len(buffer_data) < start_idx + HEADER_SIZE:
+                break
+            packet_header = get_packet_header(buffer_data[start_idx:start_idx + HEADER_SIZE])
 
-    with buf_lock:
+            frame_Id = packet_header["frameId"]
+            frame_total_len = packet_header["totalLength"]
+            if len(buffer_data) < start_idx + frame_total_len:
+                print(frame_Id,"not all",start_idx,len(buffer_data),frame_total_len, flush=True)
+                break
 
-        # 数据流控制
-        if len(buf_data) >= buf_data_threshold:
-            print("缓冲区已满，暂停接收数据", len(buf_data),flush=True)
-            buf_data.clear()
-            return
-        if len(buf_data) < MAX_RADAR_LEN:
-            return
-        sync_word = b'\x02\x01\x04\x03\x06\x05\x08\x07'
-        start_idx = buf_data.find(sync_word)
-        if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
-            print("未找到数据同步帧头，清空当前缓冲区数据", len(buf_data),flush=True)
-            buf_data.clear()
-            return
-        
-        packet_header_size = 28
-        packet_header = get_packet_header(buf_data[start_idx:start_idx + packet_header_size])
+            print(frame_Id,"all",start_idx,len(buffer_data), frame_total_len, flush=True)
+            temp_original_data=buffer_data[start_idx: start_idx + frame_total_len]
+            buffer_data = buffer_data[start_idx + frame_total_len:]  # 清除上一帧的数据
+            print(frame_Id,"clr",len(buffer_data), flush=True)
+            frame_queue.put((temp_original_data, frame_Id))# 新数据放入队列
+            print(frame_Id,'tque',flush=True)
 
-        if start_idx+packet_header["totalLength"]>len(buf_data):
-            print(packet_header["frameId"],"not all",start_idx,len(buf_data),packet_header["totalLength"], flush=True)
-            return
-        print(packet_header["frameId"],"all",start_idx,len(buf_data), packet_header["totalLength"], flush=True)
-        temp_original_data=buf_data[start_idx: start_idx + packet_header["totalLength"]]
-        buf_data = buf_data[start_idx + packet_header["totalLength"]:]  # 清除上一帧的数据
-        print( packet_header["frameId"],"clr",len(buf_data), flush=True)
+def tcp_server(host='0.0.0.0', port=PORT_NUM):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((host, port))
+    s.listen(5)
+    print(port,"TCP Server started，Waiting link...")
 
-        temp_to_web = packet_header["frameId"]
-        ready_to_upload_data_queue.put((temp_original_data, temp_to_web))# 新数据放入队列
+    conn, addr = s.accept()
+    print("网关connected:", addr)
+    conn.settimeout(10)
 
-        print( packet_header["frameId"],'tque',flush=True)
-
-
-def run_time_thread():
     while True:
-        timethread()
-        time.sleep(PRINT_TIME_INTERVAL_SECOND) #testxy_time.sleep(10)#0.1也可以
+        try:
+            data = conn.recv(65535)
+            if not data:
+                break
+            raw_queue.put(data)
+        except Exception as e:
+            print("TCP error:", e)
+            break
 
-def timethread():
-    time2 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(time2, len(buf_data),flush=True)
+if __name__ == "__main__":
 
+    threading.Thread(target=tcp_server, daemon=True).start()
+    threading.Thread(target=parse_data_thread, daemon=True).start()
+    threading.Thread(target=periodic_db_upload, daemon=True).start()
+
+    while True:
+        print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} running")
+        time.sleep(PRINT_TIME_INTERVAL_SECOND)
+
+
+
+
+# 线程存储
+threads = {}
+threads_lock = threading.Lock()
+
+
+WATCHDOG_INTERVAL = 600  # 看门狗检测间隔,单位秒 
+server = None  # 全局保存TCP服务对象
 
 def watchdog():
     """监控关键线程是否存活，若发现异常，则重启线程"""
@@ -225,102 +220,3 @@ def check_flask_api():
             print("[看门狗] Flask API 可能失去响应", flush=True)
     except requests.RequestException:
         print("[看门狗] 无法访问 Flask API", flush=True)
-
-class ServerThread:  # 用于启动tcp/ip服务端来接收雷达数据，启用保活功能，设置大缓存来保证大数据传输
-
-    def __init__(self, ipaddr, port, num):
-        self.ipaddr = ipaddr
-        self.port = port
-        self.num = num
-        self.radar_conn = None  # 用成员变量，替代全局radar
-
-    def server_link(self, conn, addr):
-        global connect_state
-        global buf_data
-        connect_state = 1
-        self.radar_conn = conn  # 绑定当前雷达连接
-
-        print("5207，网关已经连接到服务器", flush=True)
-
-        while True:
-            try:
-                data = conn.recv(1024 * 64)  # 之前是8K,更大缓冲区
-                if not data:
-                    break
-                with buf_lock:
-                    if len(buf_data) >= buf_data_threshold:
-                        print("缓冲区已满，丢弃数据", flush=True)
-                        continue
-                    buf_data.extend(data)
-            except Exception as e:
-                print(f"连接异常: {e}", flush=True)
-                break
-        conn.close()
-        connect_state = 0
-        self.radar_conn = None
-        print("[INFO] 5207,网关断开连接", flush=True)
-
-    def server_start(self):
-        s_pro = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 64)
-
-        s_pro.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-        s_pro.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
-        s_pro.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 3)
-        s_pro.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
-
-        s_pro.bind((self.ipaddr, self.port))
-        s_pro.listen(self.num)
-        print('Waiting 5207 link...', flush=True)
-
-        while True:
-            conn, addr = s_pro.accept()
-            print("新连接来自 ", addr, flush=True)
-            p = threading.Thread(target=self.server_link, args=(conn, addr))
-            if False:
-                p.daemon = True  # 建议关闭，防止突然丢数据
-            p.start()
-
-    def send_data(self, data):# 现在这个方法可以正常使用了
-        if self.radar_conn:
-            try:
-                self.radar_conn.send(data)
-                print(f"发送数据成功: {len(data)} 字节")
-            except Exception as e:
-                print(f"发送失败: {e}")
-        else:
-            print("未连接雷达，无法发送")
-
-
-if __name__ == '__main__':
-    with threads_lock:#我要开始用 threads 了，你们其他线程都先等一下，等我用完你们再用！
-
-        # 启动 TCP/IP 服务器线程
-        server = ServerThread('', 5207, 5)
-        threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
-        threads["tcp_ip_server"].start()
-        print("TCP/IP 服务器已启动")
-
-        # 启动时间处理线程
-        threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
-        threads["time"].start()
-        print("时间处理线程已启动")
-
-        # 启动矩阵处理线程
-        threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
-        threads["up_data_matrix"].start()
-        print("矩阵处理线程已启动")
-
-        threads["periodic_upload"] = threading.Thread(target=periodic_db_upload, daemon=True)
-        threads["periodic_upload"].start()
-        print("定时数据库上传线程已启动")
-
-        # 启动看门狗线程
-        threads["watchdog"] = threading.Thread(target=watchdog, daemon=True)
-        threads["watchdog"].start()
-        print("看门狗线程已启动")
-
-    # 启动 Flask，threaded=True 让其不会阻塞主线程
-    app1.run(host='0.0.0.0', port=5007, threaded=True)
-
