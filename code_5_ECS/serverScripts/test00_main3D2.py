@@ -32,9 +32,22 @@ HEADER_SIZE = 28
 PORT_NUM = 5207
 PRINT_TIME_INTERVAL_SECOND=10
 
+WATCHDOG_INTERVAL = 10      # 看门狗检测间隔,单位秒 检查频率
+TCP_TIMEOUT = 30           # 心跳
+PARSER_TIMEOUT = 60
+DB_TIMEOUT = 120
+
 buffer_data = bytearray()
 raw_queue = queue.Queue(maxsize=2000)
 frame_queue = queue.Queue(maxsize=2000)
+
+tcp_thread = None
+parser_thread = None
+db_thread = None
+
+#全局心跳表
+thread_heartbeat = {}
+heartbeat_lock = threading.Lock()
 
 
 # 数据库连接信息
@@ -92,7 +105,12 @@ def insert_data(latest_original_data, latest_point_data):
         print(f"数据库操作失败: {e}")
 
 def periodic_db_upload():
+    global thread_heartbeat
+
     while True:
+        with heartbeat_lock:
+            thread_heartbeat["db"] = time.time()
+
         if not frame_queue.empty():
             try:
                 original_data, to_web = frame_queue.get()# 取出一条
@@ -101,11 +119,17 @@ def periodic_db_upload():
             except Exception as e:
                 print(f"[定时上传] 失败: {e}")   
 
+
 def parse_data_thread():
     global buffer_data
+    global thread_heartbeat
+
     while True:
         data = raw_queue.get()
         buffer_data.extend(data)
+
+        with heartbeat_lock:
+            thread_heartbeat["parser"] = time.time()
 
         while True:
             start_idx = buffer_data.find(SYNC_WORD)
@@ -131,7 +155,10 @@ def parse_data_thread():
             frame_queue.put((temp_original_data, frame_Id))# 新数据放入队列
             print(frame_Id,'tque',flush=True)
 
+
 def tcp_server(host='0.0.0.0', port=PORT_NUM):
+    global thread_heartbeat
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((host, port))
@@ -148,75 +175,75 @@ def tcp_server(host='0.0.0.0', port=PORT_NUM):
             if not data:
                 break
             raw_queue.put(data)
+
+            with heartbeat_lock:
+                thread_heartbeat["tcp"] = time.time()
+
         except Exception as e:
             print("TCP error:", e)
             break
 
+
+def restart_tcp():
+    global tcp_thread
+
+    try:
+        tcp_thread = threading.Thread(target=tcp_server, daemon=True)
+        tcp_thread.start()
+    except Exception as e:
+        print("restart tcp failed:", e)
+
+def restart_parser():
+    global parser_thread
+
+    parser_thread = threading.Thread(target=parse_data_thread, daemon=True)
+    parser_thread.start()
+
+def restart_db():
+    global db_thread
+
+    db_thread = threading.Thread(target=periodic_db_upload, daemon=True)
+    db_thread.start()
+
+
+def watchdog():
+    while True:
+        now = time.time()
+
+        with heartbeat_lock:
+            hb = dict(thread_heartbeat)
+
+        # ===== TCP =====
+        if now - hb.get("tcp", 0) > TCP_TIMEOUT:
+            print("[WATCHDOG] TCP线程异常，准备重启")
+            restart_tcp()
+
+        # ===== parser =====
+        if now - hb.get("parser", 0) > PARSER_TIMEOUT:
+            print("[WATCHDOG] parser卡死，重启")
+            restart_parser()
+
+        # ===== db =====
+        if now - hb.get("db", 0) > DB_TIMEOUT:
+            print("[WATCHDOG] DB线程异常，重启")
+            restart_db()
+
+        time.sleep(WATCHDOG_INTERVAL)
+
+
 if __name__ == "__main__":
 
-    threading.Thread(target=tcp_server, daemon=True).start()
-    threading.Thread(target=parse_data_thread, daemon=True).start()
-    threading.Thread(target=periodic_db_upload, daemon=True).start()
+    tcp_thread = threading.Thread(target=tcp_server, daemon=True)
+    tcp_thread.start()
+
+    parser_thread = threading.Thread(target=parse_data_thread, daemon=True)
+    parser_thread.start()
+
+    db_thread = threading.Thread(target=periodic_db_upload, daemon=True)
+    db_thread.start()
+
+    threading.Thread(target=watchdog, daemon=True).start()
 
     while True:
         print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} running")
         time.sleep(PRINT_TIME_INTERVAL_SECOND)
-
-
-
-
-# 线程存储
-threads = {}
-threads_lock = threading.Lock()
-
-
-WATCHDOG_INTERVAL = 600  # 看门狗检测间隔,单位秒 
-server = None  # 全局保存TCP服务对象
-
-def watchdog():
-    """监控关键线程是否存活，若发现异常，则重启线程"""
-    global threads
-    global server  # 把server变成全局，才能真正重启
-
-    while True:
-        with threads_lock:  # 确保线程安全
-            # 检查 TCP/IP 服务器线程：先看看 threads 字典里有没有存叫 tcp_ip_server 的线程
-            #并且再看看这个线程是不是已经死了（不运行了）
-            #如果两个条件都满足 → 进入重启逻辑
-            if "tcp_ip_server" in threads and not threads["tcp_ip_server"].is_alive():
-                print("[看门狗] TCP/IP 服务器线程已停止，正在重启...", flush=True)
-                server = ServerThread('', 5207, 5)
-                threads["tcp_ip_server"] = threading.Thread(target=server.server_start, daemon=True)
-                threads["tcp_ip_server"].start()
-
-           # 检查 时间处理线程
-            if "time" in threads and not threads["time"].is_alive():
-                print("[看门狗] 时间处理线程已停止，正在重启...", flush=True)
-                threads["time"] = threading.Thread(target=run_time_thread, daemon=True)
-                threads["time"].start()
-                
-            # 检查 矩阵处理线程
-            if "up_data_matrix" in threads and not threads["up_data_matrix"].is_alive():
-                print("[看门狗] 矩阵处理线程已停止，正在重启...", flush=True)
-                threads["up_data_matrix"] = threading.Thread(target=run_up_data_thread, daemon=True)
-                threads["up_data_matrix"].start()
-
-            # ===================== 定时上传线程 =====================
-            if "periodic_upload" in threads and not threads["periodic_upload"].is_alive():
-                print("[看门狗] periodic_db_upload 已停止，正在重启...", flush=True)
-                threads["periodic_upload"] = threading.Thread(target=periodic_db_upload, daemon=True)
-                threads["periodic_upload"].start()
-
-        # 异步检查 Flask API
-        threading.Thread(target=check_flask_api, daemon=True).start()
-
-        time.sleep(WATCHDOG_INTERVAL)
-
-def check_flask_api():
-    """检查 Flask API 是否存活"""
-    try:
-        response = requests.get("http://127.0.0.1:5007/api/get_matrix", timeout=3)
-        if response.status_code != 200:
-            print("[看门狗] Flask API 可能失去响应", flush=True)
-    except requests.RequestException:
-        print("[看门狗] 无法访问 Flask API", flush=True)
