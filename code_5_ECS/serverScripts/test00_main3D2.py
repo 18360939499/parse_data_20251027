@@ -22,6 +22,8 @@ from collections import deque
 from scipy.ndimage import convolve
 from flask_compress import Compress
 
+import atexit
+
 app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
@@ -49,6 +51,11 @@ db_thread = None
 #全局心跳表
 thread_heartbeat = {}
 heartbeat_lock = threading.Lock()
+
+UPLAOD_BATCH_MODE = True #False
+UPLOAD_BATCH_SIZE = 10
+db_buffer = []
+db_lock = threading.Lock()
 
 
 # 数据库连接信息
@@ -105,8 +112,25 @@ def insert_data(latest_original_data, latest_point_data):
     except pymysql.MySQLError as e:
         print(f"数据库操作失败: {e}")
 
+def insert_data_batch(data_list):
+    try:
+        with db.cursor() as cursor:
+            sql = "INSERT INTO test20260527liuqiao (matrix_original, speed) VALUES (%s, %s)"
+
+            batch_values = []
+            for original_data, to_web in data_list:
+                original_data_bytes = pymysql.Binary(bytes(original_data))
+                batch_values.append((original_data_bytes, to_web))
+
+            cursor.executemany(sql, batch_values)
+            db.commit()
+
+    except pymysql.MySQLError as e:
+        print(f"批量数据库失败: {e}")
+
 def periodic_db_upload():
     global thread_heartbeat
+    global db_buffer
 
     while True:
         with heartbeat_lock:
@@ -114,11 +138,28 @@ def periodic_db_upload():
 
         try:
             original_data, to_web = frame_queue.get(timeout=2)# 取出一条
-            insert_data(original_data, to_web)# 上传
-            print(to_web,"tdb", flush=True)
+            if UPLAOD_BATCH_MODE:
+                #放入缓存
+                with db_lock:
+                    db_buffer.append((original_data, to_web))
+                    if len(db_buffer)>=UPLOAD_BATCH_SIZE:
+                        insert_data_batch(db_buffer)
+                        print(f"[DB] batch insert {len(db_buffer)} frames")
+                        db_buffer.clear()
+            else:
+                insert_data(original_data, to_web)# 上传
+                print(to_web,"tdb", flush=True)
         except Exception as e:
             print(f"fail to db: {e}")   
 
+def flush_db_buffer():
+    global db_buffer
+
+    with db_lock:
+        if db_buffer:
+            insert_data_batch(db_buffer)
+            print(f"[DB] flush remaining {len(db_buffer)} frames")
+            db_buffer.clear()
 
 def parse_data_thread():
     global buffer_data
@@ -254,6 +295,7 @@ def watchdog():
 
         time.sleep(WATCHDOG_INTERVAL)
 
+atexit.register(flush_db_buffer)#程序退出时调用 flush_db_buffer()，所有函数定义之后，main之前”最标准
 
 if __name__ == "__main__":
 
