@@ -45,10 +45,6 @@ buffer_data = bytearray()
 raw_queue = queue.Queue(maxsize=2000)
 frame_queue = queue.Queue(maxsize=2000)
 
-tcp_thread = None
-parser_thread = None
-db_thread = None
-
 #全局心跳表
 thread_heartbeat = {
     "tcp": time.time(),
@@ -319,7 +315,7 @@ def watchdog():
             with status_lock:
                 thread_status["db"] = False
 
-            safe_start("db", db_thread)
+            safe_start("db", periodic_db_upload)
 
         time.sleep(WATCHDOG_INTERVAL)
 
@@ -329,7 +325,7 @@ if __name__ == "__main__":
 
     safe_start("tcp", tcp_server)
     safe_start("parser", parse_data_thread)
-    safe_start("db", db_thread)
+    safe_start("db", periodic_db_upload)
 
     threading.Thread(target=watchdog, daemon=True).start()
 
