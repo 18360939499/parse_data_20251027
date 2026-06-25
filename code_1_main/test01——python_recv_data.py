@@ -5,7 +5,7 @@ from datetime import datetime
 # ================== 保存 bin 文件路径 =======-+===========
 timestamp = datetime.now().strftime("%Y_%m%d_%H%M_%S")
 
-save_bin_path = rf"..\data\radar_raw_data_{timestamp}.bin"
+save_bin_path = rf"..\..\data\radar_raw_data_{timestamp}.bin"
 
 os.makedirs(os.path.dirname(save_bin_path), exist_ok=True)
 
