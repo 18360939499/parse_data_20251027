@@ -29,6 +29,7 @@ CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
 MAX_RADAR_LEN = (0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
+MAX_RADAR_TOTAL_LEN = 20000000 #一帧不会大于20M
 SYNC_WORD = b'\x02\x01\x04\x03\x06\x05\x08\x07'
 HEADER_SIZE = 28
 PORT_NUM = 5207
@@ -54,8 +55,8 @@ heartbeat_lock = threading.Lock()
 
 UPLAOD_BATCH_MODE = True #False
 UPLOAD_BATCH_SIZE = 10
-db_buffer = []
-db_lock = threading.Lock()
+g_db_buffer = []
+g_db_buffer_lock = threading.Lock()
 
 
 # 数据库连接信息
@@ -130,7 +131,7 @@ def insert_data_batch(data_list):
 
 def periodic_db_upload():
     global thread_heartbeat
-    global db_buffer
+    global g_db_buffer
 
     while True:
         with heartbeat_lock:
@@ -140,12 +141,12 @@ def periodic_db_upload():
             original_data, to_web = frame_queue.get(timeout=2)# 取出一条
             if UPLAOD_BATCH_MODE:
                 #放入缓存
-                with db_lock:
-                    db_buffer.append((original_data, to_web))
-                    if len(db_buffer)>=UPLOAD_BATCH_SIZE:
-                        insert_data_batch(db_buffer)
-                        print(f"[DB] batch insert {len(db_buffer)} frames")
-                        db_buffer.clear()
+                with g_db_buffer_lock:
+                    g_db_buffer.append((original_data, to_web))
+                    if len(g_db_buffer)>=UPLOAD_BATCH_SIZE:
+                        insert_data_batch(g_db_buffer)
+                        print(f"[DB] batch insert {len(g_db_buffer)} frames")
+                        g_db_buffer.clear()
             else:
                 insert_data(original_data, to_web)# 上传
                 print(to_web,"tdb", flush=True)
@@ -153,13 +154,13 @@ def periodic_db_upload():
             print(f"fail to db: {e}")   
 
 def flush_db_buffer():
-    global db_buffer
+    global g_db_buffer
 
-    with db_lock:
-        if db_buffer:
-            insert_data_batch(db_buffer)
-            print(f"[DB] flush remaining {len(db_buffer)} frames")
-            db_buffer.clear()
+    with g_db_buffer_lock:
+        if g_db_buffer:
+            insert_data_batch(g_db_buffer)
+            print(f"[DB] flush remaining {len(g_db_buffer)} frames")
+            g_db_buffer.clear()
 
 def parse_data_thread():
     global buffer_data
@@ -167,38 +168,46 @@ def parse_data_thread():
 
     while True:
         data = raw_queue.get()
+        if not data:
+            continue
         buffer_data.extend(data)
 
         with heartbeat_lock:
             thread_heartbeat["parser"] = time.time()
 
         while True:
-            if len(buffer_data) < MAX_RADAR_LEN:
-                break
             start_idx = buffer_data.find(SYNC_WORD)
             if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
                 print("未找到数据同步帧头，清空当前缓冲区数据", len(buffer_data),flush=True)
                 buffer_data.clear()
                 break
+            if start_idx > 0:
+                del buffer_data[:start_idx]
             
-            if len(buffer_data) < start_idx + HEADER_SIZE:
+            if len(buffer_data) < HEADER_SIZE:
                 break
-            packet_header = get_packet_header(buffer_data[start_idx:start_idx + HEADER_SIZE])
+            packet_header = get_packet_header(buffer_data[:HEADER_SIZE])
 
             frame_Id = packet_header["frameId"]
             frame_total_len = packet_header["totalLength"]
-            if len(buffer_data) < start_idx + frame_total_len:
+
+            #合法性校验
+            if frame_total_len > MAX_RADAR_TOTAL_LEN:
+                print("invalid frame len:", frame_total_len)
+                buffer_data.clear()
+                break
+            if len(buffer_data) < frame_total_len:
                 print(frame_Id,"not all",start_idx,len(buffer_data),frame_total_len, flush=True)
                 break
 
             print(frame_Id,"all",start_idx,len(buffer_data), frame_total_len, flush=True)
-            temp_original_data=buffer_data[start_idx: start_idx + frame_total_len]
-            buffer_data = buffer_data[start_idx + frame_total_len:]  # 清除上一帧的数据
+            temp_original_data=buffer_data[:frame_total_len]
+            del buffer_data[:frame_total_len]  # 清除上一帧的数据
             print(frame_Id,"clr",len(buffer_data), flush=True)
             try:
                 frame_queue.put((temp_original_data, frame_Id), timeout=2)
-            except:
-                print("frame_queue full drop")
+            except queue.Full:
+                print("frame_queue full, drop frame")
             print(frame_Id,'tque',flush=True)
 
 # 1. server（只负责 listen）
