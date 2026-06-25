@@ -188,6 +188,8 @@ def parse_data_thread():
         beat("parser")
 
         while True:
+            if len(buffer_data) < MAX_RADAR_LEN:
+                break
             start_idx = buffer_data.find(SYNC_WORD)
             if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
                 print("未找到数据同步帧头，清空当前缓冲区数据", len(buffer_data),flush=True)
