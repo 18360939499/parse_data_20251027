@@ -144,12 +144,9 @@ def periodic_db_upload():
     while True:
         beat("db")
 
-        try:
-            original_data, to_web = frame_queue.get(timeout=2)# 取出一条
-        except:
-            print(f"fque empty : {e}") 
+        if frame_queue.empty():
             continue
-        
+        original_data, to_web = frame_queue.get(timeout=2)# 取出一条
         if UPLAOD_BATCH_MODE:
             #放入缓存
             with g_db_buffer_lock:
@@ -176,9 +173,10 @@ def parse_data_thread():
     global thread_heartbeat
 
     while True:
-        data = raw_queue.get()
-        if not data:
+        if raw_queue.empty():
             continue
+         
+        data = raw_queue.get()
         buffer_data.extend(data)
 
         beat("parser")
