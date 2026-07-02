@@ -13,7 +13,7 @@ MAX_FILE_SIZE = 200  * 1024 * 1024
 
 # ================== 创建保存目录 ==================
 timestamp = datetime.now().strftime("%Y_%m%d_%H%M_%S")
-save_dir = "../../data"
+save_dir = "../../../../data"
 os.makedirs(save_dir, exist_ok=True)
 
 # ================== 文件创建函数 ==================
