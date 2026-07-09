@@ -139,13 +139,13 @@ def periodic_db_upload():
         #放入缓存
         with g_db_buffer_lock:
             g_db_buffer.append((original_data, to_web))
-            print(f"app{to_web} ")
+            # print(f"app{to_web} ")
             if len(g_db_buffer)>=UPLOAD_BATCH_SIZE:
                 db_batch = g_db_buffer
                 g_db_buffer = []    #g_db_buffer.clear()
         if db_batch is not None:
             insert_data_batch(db_batch)
-            print(f"[DB] batch insert {len(db_batch)} frames")         
+            print(f"db{len(db_batch)}",flush=True)         
 
 def flush_db_buffer():
     global g_db_buffer
@@ -196,15 +196,15 @@ def parse_data_thread():
                 print(frame_Id,"not all",start_idx,len(buffer_data),frame_total_len, flush=True)
                 break
 
-            print(frame_Id,"all",start_idx,len(buffer_data), frame_total_len, flush=True)
+            print(frame_Id,"al",start_idx,len(buffer_data), frame_total_len, flush=True)
             temp_original_data=buffer_data[:frame_total_len]
             del buffer_data[:frame_total_len]  # 清除上一帧的数据
-            print(frame_Id,"clr",len(buffer_data), flush=True)
+            # print(frame_Id,"clr",len(buffer_data), flush=True)
             try:
                 frame_queue.put((temp_original_data, frame_Id), timeout=2)
             except queue.Full:
                 print("frame_queue full, drop frame")
-            print(frame_Id,'tque',flush=True)
+            print(frame_Id,'tq',flush=True)
 
 # 1. server（只负责 listen）
 # 2. session（只负责 conn recv）
@@ -316,5 +316,5 @@ if __name__ == "__main__":
     threading.Thread(target=watchdog, daemon=True).start()
 
     while True:
-        print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} running")
+        print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} ru")
         time.sleep(PRINT_TIME_INTERVAL_SECOND)
