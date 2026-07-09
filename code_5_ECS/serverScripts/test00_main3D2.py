@@ -37,9 +37,9 @@ PRINT_TIME_INTERVAL_SECOND=10
 
 RADAR_SEND_INTERVAL =10 #雷达发送时间间隔
 WATCHDOG_INTERVAL = 10      # 看门狗检测间隔,单位秒 检查频率
-TCP_TIMEOUT = 30           # 心跳
-PARSER_TIMEOUT = 60
-DB_TIMEOUT = 120
+TCP_TIMEOUT = 180           # 心跳
+PARSER_TIMEOUT = 180
+DB_TIMEOUT = 180
 
 buffer_data = bytearray()
 raw_queue = queue.Queue(maxsize=2000)
@@ -139,7 +139,7 @@ def periodic_db_upload():
         #放入缓存
         with g_db_buffer_lock:
             g_db_buffer.append((original_data, to_web))
-            # print(f"[DB] app {to_web} ")
+            print(f"app{to_web} ")
             if len(g_db_buffer)>=UPLOAD_BATCH_SIZE:
                 db_batch = g_db_buffer
                 g_db_buffer = []    #g_db_buffer.clear()
