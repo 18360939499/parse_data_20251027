@@ -12,7 +12,7 @@ SERVER_IP = "47.97.38.203"
 SERVER_PORT = 5207
 
 BUF_SIZE = 65535
-MIN_FRAME_LEN = 29   # 最小帧长度
+# MIN_FRAME_LEN = 29   # 最小帧长度
 
 def forward(src, dst, filter_small_frame=False):
     try:
@@ -21,10 +21,10 @@ def forward(src, dst, filter_small_frame=False):
             if not data:
                 break
 
-            # 只对“雷达 → 云端”方向做长度过滤
-            if filter_small_frame and len(data) < MIN_FRAME_LEN:
-                print(f"Drop frame: len={len(data)}")
-                continue
+            # # 只对“雷达 → 云端”方向做长度过滤
+            # if filter_small_frame and len(data) < MIN_FRAME_LEN:
+            #     print(f"Drop frame: len={len(data)}")
+            #     continue
 
             dst.sendall(data)
 

@@ -28,7 +28,7 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
+MAX_RADAR_LEN = (0x323CCC) #(0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
 MAX_RADAR_TOTAL_LEN = 20000000 #一帧不会大于20M
 SYNC_WORD = b'\x02\x01\x04\x03\x06\x05\x08\x07'
 HEADER_SIZE = 28
@@ -44,10 +44,6 @@ DB_TIMEOUT = 120
 buffer_data = bytearray()
 raw_queue = queue.Queue(maxsize=2000)
 frame_queue = queue.Queue(maxsize=2000)
-
-tcp_thread = None
-parser_thread = None
-db_thread = None
 
 #全局心跳表
 thread_heartbeat = {
@@ -148,12 +144,9 @@ def periodic_db_upload():
     while True:
         beat("db")
 
-        try:
-            original_data, to_web = frame_queue.get(timeout=2)# 取出一条
-        except:
-            print(f"fque empty : {e}") 
+        if frame_queue.empty():
             continue
-        
+        original_data, to_web = frame_queue.get(timeout=2)# 取出一条
         if UPLAOD_BATCH_MODE:
             #放入缓存
             with g_db_buffer_lock:
@@ -180,14 +173,17 @@ def parse_data_thread():
     global thread_heartbeat
 
     while True:
-        data = raw_queue.get()
-        if not data:
+        if raw_queue.empty():
             continue
+         
+        data = raw_queue.get()
         buffer_data.extend(data)
 
         beat("parser")
 
         while True:
+            if len(buffer_data) < MAX_RADAR_LEN:
+                break
             start_idx = buffer_data.find(SYNC_WORD)
             if start_idx == -1:# 未找到数据同步帧头，清空当前缓冲区数据
                 print("未找到数据同步帧头，清空当前缓冲区数据", len(buffer_data),flush=True)
@@ -317,7 +313,7 @@ def watchdog():
             with status_lock:
                 thread_status["db"] = False
 
-            safe_start("db", db_thread)
+            safe_start("db", periodic_db_upload)
 
         time.sleep(WATCHDOG_INTERVAL)
 
@@ -327,7 +323,7 @@ if __name__ == "__main__":
 
     safe_start("tcp", tcp_server)
     safe_start("parser", parse_data_thread)
-    safe_start("db", db_thread)
+    safe_start("db", periodic_db_upload)
 
     threading.Thread(target=watchdog, daemon=True).start()
 
