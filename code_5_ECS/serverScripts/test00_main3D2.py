@@ -61,7 +61,6 @@ thread_status = {
 status_lock = threading.Lock()
 
 
-UPLAOD_BATCH_MODE = True #False
 UPLOAD_BATCH_SIZE = 10
 g_db_buffer = []
 g_db_buffer_lock = threading.Lock()
@@ -109,18 +108,6 @@ def get_packet_header(header_bArr):
     }
     return header
 
-def insert_data(latest_original_data, latest_point_data):
-    try:
-        with db.cursor() as cursor:
-            matrix_bytes = pymysql.Binary(bytes(latest_original_data))  # 转成bytes再包装
-            matrix_str = latest_point_data
-
-            sql = "INSERT INTO test20260527liuqiao (matrix_original, speed) VALUES (%s, %s)"
-            cursor.execute(sql, (matrix_bytes, matrix_str))
-            db.commit()
-    except pymysql.MySQLError as e:
-        print(f"数据库操作失败: {e}")
-
 def insert_data_batch(data_list):
     try:
         with db.cursor() as cursor:
@@ -147,17 +134,18 @@ def periodic_db_upload():
         if frame_queue.empty():
             continue
         original_data, to_web = frame_queue.get(timeout=2)# 取出一条
-        if UPLAOD_BATCH_MODE:
-            #放入缓存
-            with g_db_buffer_lock:
-                g_db_buffer.append((original_data, to_web))
-                if len(g_db_buffer)>=UPLOAD_BATCH_SIZE:
-                    insert_data_batch(g_db_buffer)
-                    print(f"[DB] batch insert {len(g_db_buffer)} frames")
-                    g_db_buffer.clear()
-        else:
-            insert_data(original_data, to_web)# 上传
-            print(to_web,"tdb", flush=True)              
+
+        db_batch = None
+        #放入缓存
+        with g_db_buffer_lock:
+            g_db_buffer.append((original_data, to_web))
+            # print(f"[DB] app {to_web} ")
+            if len(g_db_buffer)>=UPLOAD_BATCH_SIZE:
+                db_batch = g_db_buffer
+                g_db_buffer = []    #g_db_buffer.clear()
+        if db_batch is not None:
+            insert_data_batch(db_batch)
+            print(f"[DB] batch insert {len(db_batch)} frames")         
 
 def flush_db_buffer():
     global g_db_buffer
