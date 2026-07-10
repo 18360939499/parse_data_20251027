@@ -28,7 +28,7 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0x02C204) #(0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
+MAX_RADAR_LEN = (0x323CCC) #(0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
 MAX_RADAR_TOTAL_LEN = 20000000 #一帧不会大于20M
 SYNC_WORD = b'\x02\x01\x04\x03\x06\x05\x08\x07'
 HEADER_SIZE = 28
@@ -37,9 +37,9 @@ PRINT_TIME_INTERVAL_SECOND=10
 
 RADAR_SEND_INTERVAL =10 #雷达发送时间间隔
 WATCHDOG_INTERVAL = 10      # 看门狗检测间隔,单位秒 检查频率
-TCP_TIMEOUT = 30           # 心跳
-PARSER_TIMEOUT = 60
-DB_TIMEOUT = 120
+TCP_TIMEOUT = 180           # 心跳
+PARSER_TIMEOUT = 180
+DB_TIMEOUT = 180
 
 buffer_data = bytearray()
 raw_queue = queue.Queue(maxsize=2000)
@@ -61,7 +61,6 @@ thread_status = {
 status_lock = threading.Lock()
 
 
-UPLAOD_BATCH_MODE = True #False
 UPLOAD_BATCH_SIZE = 10
 g_db_buffer = []
 g_db_buffer_lock = threading.Lock()
@@ -109,18 +108,6 @@ def get_packet_header(header_bArr):
     }
     return header
 
-def insert_data(latest_original_data, latest_point_data):
-    try:
-        with db.cursor() as cursor:
-            matrix_bytes = pymysql.Binary(bytes(latest_original_data))  # 转成bytes再包装
-            matrix_str = latest_point_data
-
-            sql = "INSERT INTO test20260527liuqiao (matrix_original, speed) VALUES (%s, %s)"
-            cursor.execute(sql, (matrix_bytes, matrix_str))
-            db.commit()
-    except pymysql.MySQLError as e:
-        print(f"数据库操作失败: {e}")
-
 def insert_data_batch(data_list):
     try:
         with db.cursor() as cursor:
@@ -147,17 +134,18 @@ def periodic_db_upload():
         if frame_queue.empty():
             continue
         original_data, to_web = frame_queue.get(timeout=2)# 取出一条
-        if UPLAOD_BATCH_MODE:
-            #放入缓存
-            with g_db_buffer_lock:
-                g_db_buffer.append((original_data, to_web))
-                if len(g_db_buffer)>=UPLOAD_BATCH_SIZE:
-                    insert_data_batch(g_db_buffer)
-                    print(f"[DB] batch insert {len(g_db_buffer)} frames")
-                    g_db_buffer.clear()
-        else:
-            insert_data(original_data, to_web)# 上传
-            print(to_web,"tdb", flush=True)              
+
+        db_batch = None
+        #放入缓存
+        with g_db_buffer_lock:
+            g_db_buffer.append((original_data, to_web))
+            # print(f"app{to_web} ")
+            if len(g_db_buffer)>=UPLOAD_BATCH_SIZE:
+                db_batch = g_db_buffer
+                g_db_buffer = []    #g_db_buffer.clear()
+        if db_batch is not None:
+            insert_data_batch(db_batch)
+            print(f"db{len(db_batch)}",flush=True)         
 
 def flush_db_buffer():
     global g_db_buffer
@@ -208,15 +196,15 @@ def parse_data_thread():
                 print(frame_Id,"not all",start_idx,len(buffer_data),frame_total_len, flush=True)
                 break
 
-            print(frame_Id,"all",start_idx,len(buffer_data), frame_total_len, flush=True)
+            print(frame_Id,"al",start_idx,len(buffer_data), frame_total_len, flush=True)
             temp_original_data=buffer_data[:frame_total_len]
             del buffer_data[:frame_total_len]  # 清除上一帧的数据
-            print(frame_Id,"clr",len(buffer_data), flush=True)
+            # print(frame_Id,"clr",len(buffer_data), flush=True)
             try:
                 frame_queue.put((temp_original_data, frame_Id), timeout=2)
             except queue.Full:
                 print("frame_queue full, drop frame")
-            print(frame_Id,'tque',flush=True)
+            print(frame_Id,'tq',flush=True)
 
 # 1. server（只负责 listen）
 # 2. session（只负责 conn recv）
@@ -328,5 +316,5 @@ if __name__ == "__main__":
     threading.Thread(target=watchdog, daemon=True).start()
 
     while True:
-        print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} running")
+        print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} ru")
         time.sleep(PRINT_TIME_INTERVAL_SECOND)
