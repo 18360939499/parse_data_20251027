@@ -28,7 +28,7 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0x39A320) #(0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
+MAX_RADAR_LEN = (0x399650) #(0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
 MAX_RADAR_TOTAL_LEN = 20000000 #一帧不会大于20M
 SYNC_WORD = b'\x02\x01\x04\x03\x06\x05\x08\x07'
 HEADER_SIZE = 28
