@@ -36,22 +36,10 @@ PORT_NUM = 5207
 PRINT_TIME_INTERVAL_SECOND=10
 
 RADAR_SEND_INTERVAL =10 #雷达发送时间间隔
-WATCHDOG_INTERVAL = 10      # 看门狗检测间隔,单位秒 检查频率
-TCP_TIMEOUT = 180           # 心跳
-PARSER_TIMEOUT = 180
-DB_TIMEOUT = 180
 
 buffer_data = bytearray()
 raw_queue = queue.Queue(maxsize=2000)
 frame_queue = queue.Queue(maxsize=2000)
-
-#全局心跳表
-thread_heartbeat = {
-    "tcp": time.time(),
-    "parser": time.time(),
-    "db": time.time()
-}
-heartbeat_lock = threading.Lock()
 
 thread_status = {
     "tcp": False,
@@ -125,12 +113,9 @@ def insert_data_batch(data_list):
         print(f"批量数据库失败: {e}")
 
 def periodic_db_upload():
-    global thread_heartbeat
     global g_db_buffer
 
     while True:
-        beat("db")
-
         if frame_queue.empty():
             continue
         original_data, to_web = frame_queue.get(timeout=2)# 取出一条
@@ -158,7 +143,6 @@ def flush_db_buffer():
 
 def parse_data_thread():
     global buffer_data
-    global thread_heartbeat
 
     while True:
         if raw_queue.empty():
@@ -166,8 +150,6 @@ def parse_data_thread():
          
         data = raw_queue.get()
         buffer_data.extend(data)
-
-        beat("parser")
 
         while True:
             if len(buffer_data) < MAX_RADAR_LEN:
@@ -210,7 +192,6 @@ def parse_data_thread():
 # 2. session（只负责 conn recv）
 # 3. reconnect（只负责恢复）
 def tcp_server(host='0.0.0.0', port=PORT_NUM):#监听所有网卡（0.0.0.0）
-    global thread_heartbeat
 
     while True:
         try:
@@ -237,8 +218,6 @@ def tcp_server(host='0.0.0.0', port=PORT_NUM):#监听所有网卡（0.0.0.0）
                             break
                         raw_queue.put(data)
 
-                        beat("tcp")
-
                 except socket.timeout:# ❗只是“没数据”，不是断线
                     print("[TCP] recv timeout (no data)")   
                 except Exception as e:
@@ -251,7 +230,7 @@ def tcp_server(host='0.0.0.0', port=PORT_NUM):#监听所有网卡（0.0.0.0）
                         pass
                     print("[TCP] connection closed, waiting new client")
         except Exception as e:
-            print("[TCP] 服务器启动异常, restarting::", e)
+            print("[TCP] 服务器启动异常", e)
             time.sleep(2)
 
 
@@ -264,47 +243,6 @@ def safe_start(name, target):
     t = threading.Thread(target=target, daemon=True)
     t.start()
 
-def beat(name):
-    with heartbeat_lock:
-        thread_heartbeat[name] = time.time()
-
-
-def watchdog():
-    while True:
-        now = time.time()
-
-        with heartbeat_lock:
-            hb = thread_heartbeat.copy()
-
-        # TCP
-        if now - hb.get("tcp", now) > TCP_TIMEOUT:
-            print("[WATCHDOG] restart TCP")
-
-            with status_lock:
-                thread_status["tcp"] = False
-
-            safe_start("tcp", tcp_server)
-
-        # parser
-        if now - hb.get("parser", now) > PARSER_TIMEOUT:
-            print("[WATCHDOG] restart parser")
-
-            with status_lock:
-                thread_status["parser"] = False
-
-            safe_start("parser", parse_data_thread)
-
-        # db
-        if now - hb.get("db", now) > DB_TIMEOUT:
-            print("[WATCHDOG] restart DB")
-
-            with status_lock:
-                thread_status["db"] = False
-
-            safe_start("db", periodic_db_upload)
-
-        time.sleep(WATCHDOG_INTERVAL)
-
 atexit.register(flush_db_buffer)#程序退出时调用 flush_db_buffer()，所有函数定义之后，main之前”最标准
 
 if __name__ == "__main__":
@@ -312,8 +250,6 @@ if __name__ == "__main__":
     safe_start("tcp", tcp_server)
     safe_start("parser", parse_data_thread)
     safe_start("db", periodic_db_upload)
-
-    threading.Thread(target=watchdog, daemon=True).start()
 
     while True:
         print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} ru")
