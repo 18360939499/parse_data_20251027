@@ -194,27 +194,27 @@ def parse_data_thread():
 def tcp_server(host='0.0.0.0', port=PORT_NUM):#监听所有网卡（0.0.0.0）
 
     # 1. 创建监听socket（只做一次逻辑）
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)#允许端口复用
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)#允许端口复用
     try:
-        s.bind((host, port))
+        server.bind((host, port))
     except OSError as e:
         print(f"[TCP] 端口绑定失败: {e}")
         return
-    s.listen(10)#最多允许 N 个客户端排队连接            
+    server.listen(10)#最多允许 N 个客户端排队连接            
     print(f"{port} TCP Server started，Waiting client link...")
 
     # 2. 接受连接循环
     while True:
         try:
-            conn, addr = s.accept()
+            client1, addr = server.accept()
             print("网关connected:", addr)
-            conn.settimeout((RADAR_SEND_INTERVAL*30))#如果 N 秒没有收到客户端数据，则抛 socket.timeout，服务器会主动断开网关，执行conn.close()。
+            client1.settimeout((RADAR_SEND_INTERVAL*30))#如果 N 秒没有收到客户端数据，则抛 socket.timeout，服务器会主动断开网关，执行conn.close()。
 
             # 为了不阻塞主线程接收新连接，实际项目中通常在这里开启新线程处理该连接
             # 这里为了保持你的单线程结构，使用 handle_connection 函数处理逻辑
             # 注意：如果 handle_connection 耗时较长，会阻塞 accept，导致无法及时接收新客户端
-            handle_connection(conn, addr)
+            handle_connection(client1, addr)
         except KeyboardInterrupt:
             print("[TCP] Server stopped manually.")
             break
@@ -222,11 +222,11 @@ def tcp_server(host='0.0.0.0', port=PORT_NUM):#监听所有网卡（0.0.0.0）
             print("[TCP] Accept error:", e)
             time.sleep(1)
     
-def handle_connection(conn, addr):#"""处理单个客户端连接的细节"""
+def handle_connection(client, addr):#"""处理单个客户端连接的细节"""
     try:
         # 3. 数据接收循环
         while True:
-            data = conn.recv(65535)
+            data = client.recv(65535)
             if not data:#客户端断开（正常关闭），返回值为b''，会进入这里
                 #即使客户端关闭了，服务器端 Python 里面的 conn 对象仍然存在，直到你主动conn.close()，结束循环之后会到finally
                 print("[TCP] client closed connection")
@@ -240,8 +240,7 @@ def handle_connection(conn, addr):#"""处理单个客户端连接的细节"""
     finally:
         # 4. 保证释放连接
         print(f"[TCP] {addr} connection closed, waiting new client")
-        conn.close()
-        
+        client.close()
 
 def safe_start(name, target):
     with status_lock:
