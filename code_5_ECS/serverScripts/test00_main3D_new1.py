@@ -28,11 +28,11 @@ app1 = Flask(__name__)
 CORS(app1)  # 允许所有域名的CORS请求
 Compress(app1)
 
-MAX_RADAR_LEN = (0x399650) #(0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
+MAX_RADAR_LEN = (0x323044) #(0x399650) #测试当雷达发送一帧数据大于MAX_RADAR_LEN时，可以不缺数据的接收，如果少于呢
 MAX_RADAR_TOTAL_LEN = 20000000 #一帧不会大于20M
 SYNC_WORD = b'\x02\x01\x04\x03\x06\x05\x08\x07'
 HEADER_SIZE = 28
-PORT_NUM = 5207
+PORT_NUM = 5200
 PRINT_TIME_INTERVAL_SECOND=10
 
 RADAR_SEND_INTERVAL =10 #雷达发送时间间隔
@@ -99,7 +99,7 @@ def get_packet_header(header_bArr):
 def insert_data_batch(data_list):
     try:
         with db.cursor() as cursor:
-            sql = "INSERT INTO test20260527liuqiao (matrix_original, speed) VALUES (%s, %s)"
+            sql = "INSERT INTO test20260612sihong (matrix_original, speed) VALUES (%s, %s)"
 
             batch_values = []
             for original_data, to_web in data_list:
