@@ -99,7 +99,7 @@ def get_packet_header(header_bArr):
 def insert_data_batch(data_list):
     try:
         with db.cursor() as cursor:
-            sql = "INSERT INTO test20260527liuqiao (matrix_original, speed) VALUES (%s, %s)"
+            sql = "INSERT INTO test20260724liuqiao (matrix_original, speed) VALUES (%s, %s)"
 
             batch_values = []
             for original_data, to_web in data_list:
