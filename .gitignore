@@ -9,7 +9,7 @@
 !*.py
 !*.gitignore
 !*.html
-!*.xlsx
+# !*.xlsx
 
 # 永远忽略这些常见的环境目录
 .venv/
