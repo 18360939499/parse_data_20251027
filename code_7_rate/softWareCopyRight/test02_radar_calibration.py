@@ -42,7 +42,7 @@ class Settings:
     system_limit: float = 0.01
     uncertainty_limit: float = 0.10
     zero_tolerance: float = 1e-12
-    station: str = "泗洪金锁站"
+    station: str = "宿迁某站"
 
     def validate(self):
         if self.mode not in ("fit", "fixed"):
@@ -160,13 +160,13 @@ def analyze(data, settings: Settings):
     relative = np.full(n, np.nan)
     valid_relative = np.abs(fitted) > eps
     relative[valid_relative] = residual[valid_relative] / fitted[valid_relative]
-    logs = np.full(n, np.nan)
-    valid_log = (y > 0) & (fitted > 0)
-    logs[valid_log] = np.log(y[valid_log]) - np.log(fitted[valid_log])
+    # logs = np.full(n, np.nan)
+    # valid_log = (y > 0) & (fitted > 0)
+    # logs[valid_log] = np.log(y[valid_log]) - np.log(fitted[valid_log])
     samples["相对偏离"] = relative
-    samples["对数偏离"] = logs
+    # samples["对数偏离"] = logs
     samples["相对法说明"] = np.where(valid_relative, "", "拟合值为零或近零，无法相除")
-    samples["对数法说明"] = np.where(valid_log, "", "参比值或拟合值不大于零，无法取对数")
+    # samples["对数法说明"] = np.where(valid_log, "", "参比值或拟合值不大于零，无法取对数")
     sse = float(np.dot(residual, residual))
     sst = float(np.dot(y - y.mean(), y - y.mean()))
     r2 = None if sst == 0 else 1 - sse / sst
@@ -228,11 +228,16 @@ def analyze(data, settings: Settings):
     else:
         for title in ("偏离数值检验", "系统误差", "随机不确定度"):
             tests.append(test_item(title, note=f"{int((~valid_relative).sum())}组拟合值为零或近零；整体无法评价"))
-    ln_count = int(valid_log.sum())
-    ln_u = 2 * math.sqrt(float(np.dot(logs[valid_log], logs[valid_log])) / (ln_count - 2)) if ln_count > 2 else None
-    summary.update({"相对法有效数": int(valid_relative.sum()), "对数法有效数": ln_count,
-                    "对数法2Se": ln_u,
-                    "对数法范围": "全体参与样本" if ln_count == n else "仅可取对数子集，不能替代全体评价"})
+    # ln_count = int(valid_log.sum())
+    # ln_u = 2 * math.sqrt(float(np.dot(logs[valid_log], logs[valid_log])) / (ln_count - 2)) if ln_count > 2 else None
+    # summary.update({"相对法有效数": int(valid_relative.sum()), "对数法有效数": ln_count,
+    #                 "对数法2Se": ln_u,
+    #                 "对数法范围": "全体参与样本" if ln_count == n else "仅可取对数子集，不能替代全体评价"})
+
+    summary.update({
+        "相对法有效数": int(valid_relative.sum())
+    })
+
     complete = all(item["结论"] in ("通过", "免检") for item in tests)
     summary["五项指标结论"] = "全部通过" if complete else "存在未通过或无法评价项目"
     summary["样本数提示"] = "达到报告采用的30组样本数量" if n >= 30 else "少于报告采用的30组样本数量"
@@ -253,7 +258,7 @@ def make_figure(result):
     axes[0, 0].scatter(x, y, s=25, label=f"有效样本 N={len(df)}")
     xx = np.linspace(float(x.min()), float(x.max()), 100)
     axes[0, 0].plot(xx, info["calc_a"] * xx + info["calc_b"], color="teal",
-                    label=f"V={info['calc_a']:.6f}Vr+{info['calc_b']:.6f}")#V̄
+                    label=f"V-={info['calc_a']:.6f}Vr+{info['calc_b']:.6f}")#V̄
     axes[0, 0].set(xlabel="雷达流速 m/s", ylabel="参比流速 m/s", title="流速关系率定")
     axes[0, 0].legend(fontsize=8)
     axes[0, 1].scatter(x, df["残差"], s=25)
@@ -305,7 +310,10 @@ def export_result(result, directory: Path, source: Path | None = None):
                 for cell in column[1:]:
                     if isinstance(cell.value, float):
                         cell.number_format = "0.000000"
-                if str(column[0].value) in ("相对偏离", "对数偏离"):
+                # if str(column[0].value) in ("相对偏离", "对数偏离"):
+                #     for cell in column[1:]:
+                #         cell.number_format = "0.0000%"
+                if str(column[0].value) == "相对偏离":
                     for cell in column[1:]:
                         cell.number_format = "0.0000%"
         ws = writer.book["五项指标"]
@@ -451,7 +459,7 @@ class Application:
             self.result = analyze(self.data, settings)
             summary = self.result["summary"]
             lines = [f"{NAME} V{VERSION}", f"有效参与样本 N={summary['有效参与数']}",
-                     f"V̄ = {summary['calc_a']:.6f} × Vr + {summary['calc_b']:.6f}",
+                     f"V- = {summary['calc_a']:.6f} × Vr + {summary['calc_b']:.6f}",
                      f"RMSE={summary['RMSE']:.6f}；MAE={summary['MAE']:.6f}",
                      f"r={summary['r']}；R²={summary['R²']}", ""]
             for item in self.result["tests"]:
@@ -460,8 +468,12 @@ class Application:
                 if item["检验项目"] in ("系统误差", "随机不确定度") and value is not None:
                     display = f"{value * 100:.4f}%"
                 lines.extend([f"{item['检验项目']}：{display}，{item['结论']}", item["说明"], ""])
-            lines += [summary["五项指标结论"], summary["样本数提示"],
-                      "对数法仅作为对照；综合判定采用全体相对偏离法。"]
+            # lines += [summary["五项指标结论"], summary["样本数提示"],
+            #           "对数法仅作为对照；综合判定采用全体相对偏离法。"]
+            lines += [
+                    summary["五项指标结论"],
+                    summary["样本数提示"],
+                    "随机不确定度采用相对偏离法计算。"]
             self.text.delete("1.0", "end")
             self.text.insert("end", "\n".join(lines))
             from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
